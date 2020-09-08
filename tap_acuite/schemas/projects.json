@@ -1,0 +1,21 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "Id": { "type": ["integer"] },
+    "Name": { "type": ["null", "string"] },
+    "VendorCode": { "type": ["null", "string"] },
+    "Status": { "type": ["null", "string"] },
+    "Location": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": ["integer"] }
+      }
+    },
+    "Address1": { "type": ["null", "string"] },
+    "Longitude": { "type": ["null", "integer"] },
+    "Latitude": { "type": ["null", "integer"] },
+    "CurrencyId": { "type": ["null", "string"] }
+  }
+}

@@ -11,6 +11,8 @@ This tap:
   - Projects
   - Audits
   - Health and safety events
+  - Event categories
+  - Event subcategories
   - Companies
   - Locations
   - People

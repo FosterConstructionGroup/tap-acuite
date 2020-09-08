@@ -1,0 +1,8 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "Id": { "type": ["integer"] },
+    "Name": { "type": ["null", "string"] }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "Id": { "type": ["integer"] },
+    "VendorCode": { "type": ["null", "string"] },
+    "Name": { "type": ["null", "string"] }
+  }
+}

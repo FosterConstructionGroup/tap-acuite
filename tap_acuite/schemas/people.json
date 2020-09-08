@@ -1,0 +1,28 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "Id": { "type": ["integer"] },
+    "VendorCode": { "type": ["null", "string"] },
+    "Company": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": ["integer"] }
+      }
+    },
+    "FirstName": { "type": ["null", "string"] },
+    "LastName": { "type": ["null", "string"] },
+    "PhoneNumber": { "type": ["null", "string"] },
+    "AssignedProjects": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "additionalProperties": false,
+        "properties": {
+          "Id": { "type": ["integer"] }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "Id": { "type": ["integer"] },
+    "Name": { "type": ["null", "string"] },
+    "Subcategory": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": ["integer"] }
+      }
+    },
+    "Description": { "type": ["null", "string"] },
+    "DateReported": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "DateOccurred": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "CompanyInvolved": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": ["integer"] }
+      }
+    },
+    "SiteAddress": { "type": ["null", "string"] },
+    "SeriousHarm": { "type": ["null", "boolean"] },
+    "ActionTaken": { "type": ["null", "string"] },
+    "ActionCausingIncident": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": ["integer"] },
+        "Name": { "type": ["string"] }
+      }
+    },
+    "ObjectOrConditionCausingIncident": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": ["integer"] },
+        "Name": { "type": ["string"] }
+      }
+    },
+    "ContributingFactor": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": ["integer"] },
+        "Name": { "type": ["string"] }
+      }
+    },
+    "PreventativeAction": { "type": ["null", "string"] },
+    "WeatherConditions": { "type": ["null", "string"] },
+    "SignificantHazard": { "type": ["null", "boolean"] },
+    "InjuryDetails": {
+      "PreventativeAction": { "type": ["null", "string"] },
+      "InjuredPersonDetails": {
+        "FirstName": { "type": ["null", "string"] },
+        "LastName": { "type": ["null", "string"] },
+        "ResidentialAddress": { "type": ["null", "string"] },
+        "DateOfBirth": {
+          "type": ["null", "string"],
+          "format": "date-time"
+        },
+        "Gender": { "type": ["null", "string"] },
+        "PhoneNumber": { "type": ["null", "string"] },
+        "Occupation": { "type": ["null", "string"] },
+        "WorkPosition": {
+          "type": ["null", "object"],
+          "additionalProperties": false,
+          "properties": {
+            "Name": { "type": ["string"] },
+            "Id": { "type": ["integer"] }
+          }
+        },
+        "PeriodOfEmployment": { "type": ["null", "string"] },
+        "HoursAtWork": { "type": ["null", "integer"] }
+      },
+      "InjuredPersonEmployerDetails": {
+        "type": ["null", "object"],
+        "additionalProperties": false,
+        "properties": {
+          "Address": { "type": ["null", "string"] },
+          "PhoneNumber": { "type": ["string"] }
+        }
+      },
+      "AccClaim": { "type": ["null", "boolean"] }
+    },
+    "ReportingPersonDetails": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": ["integer"] }
+      }
+    },
+    "LikelihoodOfEventReocurring": { "type": ["null", "integer"] },
+    "ConsequenceOfEventReocurring": { "type": ["null", "integer"] },
+    "DateCreated": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "CreatedBy": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": ["integer"] }
+      }
+    },
+    "DateClosed": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "ClosedBy": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": ["integer"] }
+      }
+    },
+    "IsDeleted": { "type": ["null", "boolean"] }
+  }
+}
