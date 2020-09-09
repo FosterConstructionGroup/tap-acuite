@@ -20,14 +20,9 @@ base_url = "https://api.acuite.co.nz/"
 pageSize = 1000
 
 
-def get_generic(source, url, page=0, extra_query_string={}):
+def get_generic(source, url, qs={}):
     with metrics.http_request_timer(source) as timer:
-        session.headers.update()
-
-        qs = {"pageNumber": page, "pageSize": pageSize}
-        query_string = build_query_string(
-            {**qs, **extra_query_string}
-        )  # spread operator to combine base query strnig arguments with extras passed in
+        query_string = build_query_string(qs)
         resp = session.request(method="get", url=base_url + url + query_string)
 
         if resp.status_code == 401:
@@ -36,8 +31,7 @@ def get_generic(source, url, page=0, extra_query_string={}):
             raise AuthException(resp.text)
         if resp.status_code == 404:
             raise NotFoundException(resp.text)
-        # throw exception if not 200
-        resp.raise_for_status()
+        resp.raise_for_status()  # throw exception if not 200
 
         timer.tags[metrics.Tag.http_status_code] = resp.status_code
         return resp.json()
@@ -47,7 +41,11 @@ def get_all_pages(source, url, extra_query_string={}):
     current_page = 1
 
     while True:
-        r = get_generic(source, url, current_page, extra_query_string)
+        r = get_generic(
+            source,
+            url,
+            {**extra_query_string, "pageNumber": current_page, "pageSize": pageSize},
+        )
         json = r["Data"]
         yield json["Items"]
         if json["NumberOfPages"] > json["CurrentPage"]:
