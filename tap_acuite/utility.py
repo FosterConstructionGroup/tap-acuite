@@ -21,7 +21,6 @@ pageSize = 1000
 
 
 def get_generic(source, url, page=0, extra_query_string={}):
-    print(source, ": getting page ", page)
     with metrics.http_request_timer(source) as timer:
         session.headers.update()
 

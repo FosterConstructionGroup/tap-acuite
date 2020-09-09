@@ -14,8 +14,8 @@
       }
     },
     "Address1": { "type": ["null", "string"] },
-    "Longitude": { "type": ["null", "integer"] },
-    "Latitude": { "type": ["null", "integer"] },
+    "Longitude": { "type": ["null", "number"] },
+    "Latitude": { "type": ["null", "number"] },
     "CurrencyId": { "type": ["null", "string"] }
   }
 }
