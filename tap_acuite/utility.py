@@ -36,9 +36,11 @@ def get_generic(source, url, page=0, extra_query_string={}):
             raise AuthException(resp.text)
         if resp.status_code == 404:
             raise NotFoundException(resp.text)
+        # throw exception if not 200
+        resp.raise_for_status()
 
         timer.tags[metrics.Tag.http_status_code] = resp.status_code
-        return resp
+        return resp.json()
 
 
 def get_all_pages(source, url, extra_query_string={}):
@@ -46,10 +48,7 @@ def get_all_pages(source, url, extra_query_string={}):
 
     while True:
         r = get_generic(source, url, current_page, extra_query_string)
-        # throw exception if not 200
-        r.raise_for_status()
-        json = r.json()
-        json = json["Data"]
+        json = r["Data"]
         yield json["Items"]
         if json["NumberOfPages"] > json["CurrentPage"]:
             current_page = json["CurrentPage"] + 1
