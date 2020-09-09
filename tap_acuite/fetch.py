@@ -1,7 +1,13 @@
 import singer
 import singer.metrics as metrics
 from singer import metadata
-from tap_acuite.utility import get_generic, get_all_pages, formatDate
+from tap_acuite.utility import (
+    get_generic,
+    get_all_pages,
+    formatDate,
+    blockStderr,
+    enableStderr,
+)
 
 
 def get_paginated(resource, url=""):
@@ -107,14 +113,17 @@ def get_detailed(resource, url, schemas, state, mdata):
 
 
 def write(rows, resource, schema, mdata, dt):
+    # transformer sends messages to stderr about removing data that wasn't in schema, filter that out
+    blockStderr()
     with metrics.record_counter(resource) as counter:
         for row in rows:
             with singer.Transformer() as transformer:
                 rec = transformer.transform(
                     row, schema, metadata=metadata.to_map(mdata)
                 )
-                singer.write_record(resource, rec, time_extracted=dt)
+            singer.write_record(resource, rec, time_extracted=dt)
             counter.increment()
+    enableStderr()
 
 
 def write_bookmark(state, resource, dt):
