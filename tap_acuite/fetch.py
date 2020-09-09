@@ -29,21 +29,67 @@ def get_projects(schemas, state, mdata):
     write(rows, "projects", schemas["projects"], mdata, extraction_time)
 
     for project in rows:
-                    if schemas.get("audits"):
-                        get_detailed(
-                            "audits",
+        if schemas.get("audits"):
+            get_detailed(
+                "audits",
                 "projects/{}/audits".format(project["Id"]),
-                            schemas,
-                            state,
-                            mdata,
-                        )
+                schemas,
+                state,
+                mdata,
+            )
 
-                    if schemas.get("rfis"):
-            get_paginated("rfis", "projects/{}/rfi".format(project["Id"]))
+        if schemas.get("hsevents"):
+            get_hsevents(
+                "projects/{}/hse/events".format(project["Id"]), schemas, state, mdata
+            )
 
-
+        if schemas.get("rfis"):
+            get_paginated("rfis", "projects/{}/rfi".format(project["Id"]))(
+                schemas["rfis"], state, mdata
+            )
 
     return write_bookmark(state, "projects", extraction_time)
+
+
+def get_hsevents(url, schemas, state, mdata):
+    extraction_time = singer.utils.now()
+
+    def get_detail(row):
+        r = get_generic("hsevents", "{}/{}".format(url, row["Id"]))
+        return r["Data"]
+
+    r = get_generic("hsevents", url)
+    details = [get_detail(row) for row in r["Data"]]
+
+    write(details, "hsevents", schemas["hsevents"], mdata, extraction_time)
+
+    if schemas.get("categories"):
+        categories_ids = set()
+        categories = []
+        for evt in details:
+            c = evt["SubCategory"]["ParentCategory"]
+            if c["Id"] not in categories_ids:
+                categories_ids.add(c["Id"])
+                categories.append(c)
+        write(categories, "categories", schemas["categories"], mdata, extraction_time)
+
+    if schemas.get("subcategories"):
+        subcategories_ids = set()
+        subcategories = []
+        for evt in details:
+            s = evt["SubCategory"]
+            if s["Id"] not in subcategories_ids:
+                subcategories_ids.add(s["Id"])
+                subcategories.append(s)
+        write(
+            subcategories,
+            "subcategories",
+            schemas["subcategories"],
+            mdata,
+            extraction_time,
+        )
+
+    return write_bookmark(state, "hsevents", extraction_time)
 
 
 def get_detailed(resource, url, schemas, state, mdata):
