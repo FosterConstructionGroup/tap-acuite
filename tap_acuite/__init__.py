@@ -96,7 +96,7 @@ def get_stream_from_catalog(stream_id, catalog):
 
 
 def do_sync(config, state, catalog):
-    session.headers.update({"Authorization": "Bearer " + config["api_key"]})
+    session.headers.update({"AcuiteApiKey": config["api_key"]})
 
     selected_stream_ids = get_selected_streams(catalog)
 
