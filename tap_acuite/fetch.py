@@ -8,7 +8,7 @@ from tap_acuite.utility import (
 )
 
 
-def get_paginated(resource, url=""):
+def handle_paginated(resource, url=""):
     extraction_time = singer.utils.now()
 
     if url == "":
@@ -22,7 +22,7 @@ def get_paginated(resource, url=""):
     return get
 
 
-def get_projects(schemas, state, mdata):
+def handle_projects(schemas, state, mdata):
     extraction_time = singer.utils.now()
 
     rows = [
@@ -34,7 +34,7 @@ def get_projects(schemas, state, mdata):
 
     for project in rows:
         if schemas.get("audits"):
-            get_detailed(
+            handle_detailed(
                 "audits",
                 "projects/{}/audits".format(project["Id"]),
                 schemas,
@@ -43,19 +43,19 @@ def get_projects(schemas, state, mdata):
             )
 
         if schemas.get("hsevents"):
-            get_hsevents(
+            handle_hsevents(
                 "projects/{}/hse/events".format(project["Id"]), schemas, state, mdata
             )
 
         if schemas.get("rfis"):
-            get_paginated("rfis", "projects/{}/rfi".format(project["Id"]))(
+            handle_paginated("rfis", "projects/{}/rfi".format(project["Id"]))(
                 schemas["rfis"], state, mdata
             )
 
     return write_bookmark(state, "projects", extraction_time)
 
 
-def get_hsevents(url, schemas, state, mdata):
+def handle_hsevents(url, schemas, state, mdata):
     extraction_time = singer.utils.now()
 
     def get_detail(row):
@@ -96,7 +96,7 @@ def get_hsevents(url, schemas, state, mdata):
     return write_bookmark(state, "hsevents", extraction_time)
 
 
-def get_detailed(resource, url, schemas, state, mdata):
+def handle_detailed(resource, url, schemas, state, mdata):
     extraction_time = singer.utils.now()
 
     def get_detail(row):

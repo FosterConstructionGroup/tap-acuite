@@ -1,11 +1,11 @@
-from tap_acuite.fetch import get_paginated, get_projects
+from tap_acuite.fetch import handle_paginated, handle_projects
 
 
 SYNC_FUNCTIONS = {
-    "companies": get_paginated("companies"),
-    "locations": get_paginated("locations"),
-    "people": get_paginated("people"),
-    "projects": get_projects,
+    "companies": handle_paginated("companies"),
+    "locations": handle_paginated("locations"),
+    "people": handle_paginated("people"),
+    "projects": handle_projects,
 }
 
 SUB_STREAMS = {
