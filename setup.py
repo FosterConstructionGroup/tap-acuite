@@ -10,7 +10,7 @@ setup(
     url="https://samwoolerton.com",
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_acuite"],
-    install_requires=["singer-python==5.3.3", "requests==2.20.0"],
+    install_requires=["singer-python==5.9.0", "requests==2.20.0"],
     extras_require={"dev": ["pylint", "ipdb", "nose",]},
     entry_points="""
           [console_scripts]

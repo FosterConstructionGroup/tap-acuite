@@ -67,11 +67,3 @@ def build_query_string(dict):
         return ""
 
     return "?" + "&".join(["{}={}".format(k, v) for k, v in dict.items()])
-
-
-def blockStderr():
-    sys.stderr = open(os.devnull, "w")
-
-
-def enableStderr():
-    sys.stderr = sys.__stderr__

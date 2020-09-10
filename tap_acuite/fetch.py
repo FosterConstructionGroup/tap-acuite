@@ -5,8 +5,6 @@ from tap_acuite.utility import (
     get_generic,
     get_all_pages,
     formatDate,
-    blockStderr,
-    enableStderr,
 )
 
 
@@ -113,8 +111,6 @@ def get_detailed(resource, url, schemas, state, mdata):
 
 
 def write(rows, resource, schema, mdata, dt):
-    # transformer sends messages to stderr about removing data that wasn't in schema, filter that out
-    blockStderr()
     with metrics.record_counter(resource) as counter:
         for row in rows:
             with singer.Transformer() as transformer:
@@ -123,7 +119,6 @@ def write(rows, resource, schema, mdata, dt):
                 )
             singer.write_record(resource, rec, time_extracted=dt)
             counter.increment()
-    enableStderr()
 
 
 def write_bookmark(state, resource, dt):
