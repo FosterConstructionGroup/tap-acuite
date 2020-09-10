@@ -15,8 +15,11 @@ def handle_paginated(resource, url=""):
         url = resource
 
     def get(schema, state, mdata):
-        rows = [row for page in get_all_pages(resource, url) for row in page]
-        write(rows, resource, schema, mdata, extraction_time)
+        with metrics.record_counter(resource) as counter:
+            for page in get_all_pages(resource, url):
+                for row in page:
+                    write_record(row, resource, schema, mdata, extraction_time)
+                    counter.increment()
         return write_bookmark(state, resource, extraction_time)
 
     return get
@@ -30,7 +33,7 @@ def handle_projects(schemas, state, mdata):
         for page in get_all_pages("projects", "projects", {"includeArchived": "true"})
         for row in page
     ]
-    write(rows, "projects", schemas["projects"], mdata, extraction_time)
+    write_many(rows, "projects", schemas["projects"], mdata, extraction_time)
 
     for project in rows:
         if schemas.get("audits"):
@@ -57,15 +60,14 @@ def handle_projects(schemas, state, mdata):
 
 def handle_hsevents(url, schemas, state, mdata):
     extraction_time = singer.utils.now()
+    r = get_generic("hsevents", url)
 
     def get_detail(row):
         r = get_generic("hsevents", "{}/{}".format(url, row["Id"]))
         return r["Data"]
 
-    r = get_generic("hsevents", url)
     details = [get_detail(row) for row in r["Data"]]
-
-    write(details, "hsevents", schemas["hsevents"], mdata, extraction_time)
+    write_many(details, "hsevents", schemas["hsevents"], mdata, extraction_time)
 
     if schemas.get("categories"):
         categories_ids = set()
@@ -75,7 +77,9 @@ def handle_hsevents(url, schemas, state, mdata):
             if c["Id"] not in categories_ids:
                 categories_ids.add(c["Id"])
                 categories.append(c)
-        write(categories, "categories", schemas["categories"], mdata, extraction_time)
+        write_many(
+            categories, "categories", schemas["categories"], mdata, extraction_time
+        )
 
     if schemas.get("subcategories"):
         subcategories_ids = set()
@@ -85,7 +89,7 @@ def handle_hsevents(url, schemas, state, mdata):
             if s["Id"] not in subcategories_ids:
                 subcategories_ids.add(s["Id"])
                 subcategories.append(s)
-        write(
+        write_many(
             subcategories,
             "subcategories",
             schemas["subcategories"],
@@ -98,27 +102,33 @@ def handle_hsevents(url, schemas, state, mdata):
 
 def handle_detailed(resource, url, schemas, state, mdata):
     extraction_time = singer.utils.now()
+    r = get_generic(resource, url)
 
     def get_detail(row):
         r = get_generic(resource, "{}/{}".format(url, row["Id"]))
         return r["Data"]
 
-    r = get_generic(resource, url)
-    details = [get_detail(row) for row in r["Data"]]
+    with metrics.record_counter(resource) as counter:
+        for row in r["Data"]:
+            detail = get_detail(row)
+            write_record(detail, resource, schemas[resource], mdata, extraction_time)
+            counter.increment()
 
-    write(details, resource, schemas[resource], mdata, extraction_time)
     return write_bookmark(state, resource, extraction_time)
 
 
-def write(rows, resource, schema, mdata, dt):
+# More convenient to use but has to all be held in memory, so use write_record instead for resources with many rows
+def write_many(rows, resource, schema, mdata, dt):
     with metrics.record_counter(resource) as counter:
         for row in rows:
-            with singer.Transformer() as transformer:
-                rec = transformer.transform(
-                    row, schema, metadata=metadata.to_map(mdata)
-                )
-            singer.write_record(resource, rec, time_extracted=dt)
+            write_record(row, resource, schema, mdata, dt)
             counter.increment()
+
+
+def write_record(row, resource, schema, mdata, dt):
+    with singer.Transformer() as transformer:
+        rec = transformer.transform(row, schema, metadata=metadata.to_map(mdata))
+    singer.write_record(resource, rec, time_extracted=dt)
 
 
 def write_bookmark(state, resource, dt):
