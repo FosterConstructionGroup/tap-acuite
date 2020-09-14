@@ -20,7 +20,8 @@
         "type": ["null", "object"],
         "additionalProperties": false,
         "properties": {
-          "Id": { "type": ["integer"] }
+          "Id": { "type": ["integer"] },
+          "PersonId": { "type": ["integer"] }
         }
       }
     }

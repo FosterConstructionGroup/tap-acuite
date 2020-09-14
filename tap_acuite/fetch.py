@@ -8,7 +8,7 @@ from tap_acuite.utility import (
 )
 
 
-def handle_paginated(resource, url=""):
+def handle_paginated(resource, url="", func=None):
     extraction_time = singer.utils.now()
 
     if url == "":
@@ -18,6 +18,10 @@ def handle_paginated(resource, url=""):
         with metrics.record_counter(resource) as counter:
             for page in get_all_pages(resource, url):
                 for row in page:
+                    # optional transform function
+                    if func != None:
+                        row = func(row)
+
                     write_record(row, resource, schema, mdata, extraction_time)
                     counter.increment()
         return write_bookmark(state, resource, extraction_time)
