@@ -58,28 +58,36 @@
     "WeatherConditions": { "type": ["null", "string"] },
     "SignificantHazard": { "type": ["null", "boolean"] },
     "InjuryDetails": {
-      "PreventativeAction": { "type": ["null", "string"] },
-      "InjuredPersonDetails": {
-        "FirstName": { "type": ["null", "string"] },
-        "LastName": { "type": ["null", "string"] },
-        "ResidentialAddress": { "type": ["null", "string"] },
-        "DateOfBirth": {
-          "type": ["null", "string"],
-          "format": "date-time"
-        },
-        "Gender": { "type": ["null", "string"] },
-        "PhoneNumber": { "type": ["null", "string"] },
-        "Occupation": { "type": ["null", "string"] },
-        "WorkPosition": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "PreventativeAction": { "type": ["null", "string"] },
+        "InjuredPersonDetails": {
           "type": ["null", "object"],
           "additionalProperties": false,
           "properties": {
-            "Name": { "type": ["string"] },
-            "Id": { "type": ["integer"] }
+            "FirstName": { "type": ["null", "string"] },
+            "LastName": { "type": ["null", "string"] },
+            "ResidentialAddress": { "type": ["null", "string"] },
+            "DateOfBirth": {
+              "type": ["null", "string"],
+              "format": "date-time"
+            },
+            "Gender": { "type": ["null", "string"] },
+            "PhoneNumber": { "type": ["null", "string"] },
+            "Occupation": { "type": ["null", "string"] },
+            "WorkPosition": {
+              "type": ["null", "object"],
+              "additionalProperties": false,
+              "properties": {
+                "Name": { "type": ["string"] },
+                "Id": { "type": ["integer"] }
+              }
+            },
+            "PeriodOfEmployment": { "type": ["null", "string"] },
+            "HoursAtWork": { "type": ["null", "integer"] }
           }
-        },
-        "PeriodOfEmployment": { "type": ["null", "string"] },
-        "HoursAtWork": { "type": ["null", "integer"] }
+        }
       },
       "InjuredPersonEmployerDetails": {
         "type": ["null", "object"],
