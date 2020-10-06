@@ -72,12 +72,12 @@ def handle_hsevents(url, schemas, state, mdata):
 
     details = [get_detail(row) for row in r["Data"]]
 
+    columns_to_trim = ["Description", "PreventativeAction", "ActionTaken"]
     for row in details:
         # keep only first 500 characters of these columns as they aren't needed for reporting, take up space in Redshift, and Redshift tops out at 1k characters
-        if "Description" in row and len(row["Description"]) > 500:
-            row["Description"] = row["Description"][:500]
-        if "PreventativeAction" in row and len(row["PreventativeAction"]) > 500:
-            row["PreventativeAction"] = row["PreventativeAction"][:500]
+        for col in columns_to_trim:
+            if col in row and len(row[col]) > 500:
+                row[col] = row[col][:500]
 
     write_many(details, "hsevents", schemas["hsevents"], mdata, extraction_time)
 
