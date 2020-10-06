@@ -4,160 +4,160 @@
   "properties": {
     "Id": { "type": ["integer"] },
     "Kpi": { "type": ["null", "string"] },
-    "Name": { "type": ["null", "string"] }
-  },
-  "Template": {
-    "type": ["null", "object"],
-    "additionalProperties": false,
-    "properties": {
-      "Id": { "type": ["integer"] }
-    }
-  },
-  "Sections": {
-    "type": "array",
-    "items": {
+    "Name": { "type": ["null", "string"] },
+    "Template": {
       "type": ["null", "object"],
+      "additionalProperties": false,
       "properties": {
-        "Id": { "type": ["integer"] },
-        "Name": {
-          "type": ["null", "string"]
-        },
-        "TemplateSection": {
-          "type": "object",
-          "properties": {
-            "Id": {
-              "type": "integer"
-            }
-          }
-        },
-        "SectionNumber": {
-          "type": "integer"
-        },
-        "SubSections": {
-          "type": ["null", "array"],
-          "items": {}
-        },
-        "Questions": {
-          "type": "array",
-          "items": {
+        "Id": { "type": ["integer"] }
+      }
+    },
+    "Sections": {
+      "type": "array",
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "Id": { "type": ["integer"] },
+          "Name": {
+            "type": ["null", "string"]
+          },
+          "TemplateSection": {
             "type": "object",
             "properties": {
               "Id": {
                 "type": "integer"
-              },
-              "Name": {
-                "type": ["null", "string"]
-              },
-              "TemplateQuestion": {
-                "type": "object",
-                "properties": {
-                  "Id": {
-                    "type": "integer"
-                  }
-                }
-              },
-              "QuestionNumber": {
-                "type": "integer"
-              },
-              "Type": {
-                "type": ["null", "string"]
-              },
-              "Answer": {
-                "type": ["null", "string"]
-              },
-              "PossibleWeighting": {
-                "type": ["null", "number"]
-              },
-              "ActualWeighting": {
-                "type": ["null", "number"]
-              },
-              "Priority": {
-                "type": "object",
-                "properties": {
-                  "Id": {
-                    "type": "integer"
-                  },
-                  "Name": {
-                    "type": "string"
-                  },
-                  "Duration": {
-                    "type": ["null", "integer"]
-                  }
-                }
-              },
-              "Comments": {
-                "type": ["null", "array"],
-                "items": {
-                  "type": ["null", "object"],
+              }
+            }
+          },
+          "SectionNumber": {
+            "type": "integer"
+          },
+          "SubSections": {
+            "type": ["null", "array"],
+            "items": {}
+          },
+          "Questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Id": {
+                  "type": "integer"
+                },
+                "Name": {
+                  "type": ["null", "string"]
+                },
+                "TemplateQuestion": {
+                  "type": "object",
                   "properties": {
-                    "CommentText": {
+                    "Id": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "QuestionNumber": {
+                  "type": "integer"
+                },
+                "Type": {
+                  "type": ["null", "string"]
+                },
+                "Answer": {
+                  "type": ["null", "string"]
+                },
+                "PossibleWeighting": {
+                  "type": ["null", "number"]
+                },
+                "ActualWeighting": {
+                  "type": ["null", "number"]
+                },
+                "Priority": {
+                  "type": "object",
+                  "properties": {
+                    "Id": {
+                      "type": "integer"
+                    },
+                    "Name": {
                       "type": "string"
                     },
-                    "CommentDate": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "Commenter": {
-                      "type": "object",
-                      "properties": {
-                        "Id": {
-                          "type": "integer"
+                    "Duration": {
+                      "type": ["null", "integer"]
+                    }
+                  }
+                },
+                "Comments": {
+                  "type": ["null", "array"],
+                  "items": {
+                    "type": ["null", "object"],
+                    "properties": {
+                      "CommentText": {
+                        "type": "string"
+                      },
+                      "CommentDate": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "Commenter": {
+                        "type": "object",
+                        "properties": {
+                          "Id": {
+                            "type": "integer"
+                          }
                         }
                       }
                     }
                   }
-                }
-              },
-              "IsClosed": {
-                "type": "boolean"
-              },
-              "DateClosed": {
-                "type": ["null", "string"],
-                "format": "date-time"
-              },
-              "ClosedBy": {
-                "type": ["null", "object"],
-                "properties": {
-                  "Id": {
-                    "type": "integer"
+                },
+                "IsClosed": {
+                  "type": "boolean"
+                },
+                "DateClosed": {
+                  "type": ["null", "string"],
+                  "format": "date-time"
+                },
+                "ClosedBy": {
+                  "type": ["null", "object"],
+                  "properties": {
+                    "Id": {
+                      "type": "integer"
+                    }
                   }
+                },
+                "AssignedCompanies": {
+                  "type": ["null", "array"],
+                  "items": {}
                 }
-              },
-              "AssignedCompanies": {
-                "type": ["null", "array"],
-                "items": {}
               }
             }
           }
         }
       }
-    }
-  },
-  "DateCreated": {
-    "type": ["null", "string"],
-    "format": "date-time"
-  },
-  "CreatedBy": {
-    "type": "object",
-    "properties": {
-      "Id": {
-        "type": "integer"
+    },
+    "DateCreated": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "CreatedBy": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "integer"
+        }
       }
-    }
-  },
-  "DateClosed": {
-    "type": ["null", "string"],
-    "format": "date-time"
-  },
-  "ClosedBy": {
-    "type": ["null", "object"],
-    "properties": {
-      "Id": {
-        "type": "integer"
+    },
+    "DateClosed": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "ClosedBy": {
+      "type": ["null", "object"],
+      "properties": {
+        "Id": {
+          "type": "integer"
+        }
       }
+    },
+    "IsDeleted": {
+      "type": "boolean"
     }
-  },
-  "IsDeleted": {
-    "type": "boolean"
   }
 }
