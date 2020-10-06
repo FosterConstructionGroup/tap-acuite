@@ -44,6 +44,9 @@
                 "Id": {
                   "type": "integer"
                 },
+                "section_id": {
+                  "type": "integer"
+                },
                 "Name": {
                   "type": ["null", "string"]
                 },
