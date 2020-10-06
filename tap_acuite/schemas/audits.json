@@ -84,29 +84,6 @@
                     }
                   }
                 },
-                "Comments": {
-                  "type": ["null", "array"],
-                  "items": {
-                    "type": ["null", "object"],
-                    "properties": {
-                      "CommentText": {
-                        "type": "string"
-                      },
-                      "CommentDate": {
-                        "type": "string",
-                        "format": "date-time"
-                      },
-                      "Commenter": {
-                        "type": "object",
-                        "properties": {
-                          "Id": {
-                            "type": "integer"
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
                 "IsClosed": {
                   "type": "boolean"
                 },
