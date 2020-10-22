@@ -71,7 +71,6 @@ def handle_hsevents(project_id, schemas, state, mdata):
         "Description",
         "PreventativeAction",
         "ActionTaken",
-        "Answer",
         "WeatherConditions",
     ]
     for row in details:
@@ -134,6 +133,8 @@ def handle_audits(url, schemas, state, mdata):
                 for section in detail["Sections"]:
                     for question in section["Questions"]:
                         question["section_id"] = section["Id"]
+                        # Trim to max 500 characters as Redshift has max length 1k characters
+                        question["Answer"] = question["Answer"][:500]
             except:
                 pass
 
