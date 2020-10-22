@@ -67,7 +67,13 @@ def handle_hsevents(project_id, schemas, state, mdata):
 
     details = [get_detail(row) for row in r["Data"]]
 
-    columns_to_trim = ["Description", "PreventativeAction", "ActionTaken"]
+    columns_to_trim = [
+        "Description",
+        "PreventativeAction",
+        "ActionTaken",
+        "Answer",
+        "WeatherConditions",
+    ]
     for row in details:
         # keep only first 500 characters of these columns as they aren't needed for reporting, take up space in Redshift, and Redshift tops out at 1k characters
         for col in columns_to_trim:
