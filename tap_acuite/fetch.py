@@ -46,9 +46,7 @@ def handle_projects(schemas, state, mdata):
             )
 
         if schemas.get("hsevents"):
-            handle_hsevents(
-                "projects/{}/hse/events".format(project["Id"]), schemas, state, mdata
-            )
+            handle_hsevents(project["Id"], schemas, state, mdata)
 
         if schemas.get("rfis"):
             handle_paginated("rfis", "projects/{}/rfi".format(project["Id"]))(
@@ -58,7 +56,8 @@ def handle_projects(schemas, state, mdata):
     return write_bookmark(state, "projects", extraction_time)
 
 
-def handle_hsevents(url, schemas, state, mdata):
+def handle_hsevents(project_id, schemas, state, mdata):
+    url = "projects/{}/hse/events".format(project_id)
     extraction_time = singer.utils.now()
     r = get_generic("hsevents", url)
 
@@ -74,6 +73,9 @@ def handle_hsevents(url, schemas, state, mdata):
         for col in columns_to_trim:
             if col in row and len(row[col]) > 500:
                 row[col] = row[col][:500]
+
+        # Project ID isn't returned in the record, so add it
+        row["ProjectId"] = project_id
 
     write_many(details, "hsevents", schemas["hsevents"], mdata, extraction_time)
 

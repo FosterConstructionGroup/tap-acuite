@@ -3,6 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "Id": { "type": ["integer"] },
+    "ProjectId": { "type": ["integer"] },
     "Name": { "type": ["null", "string"] },
     "Subcategory": {
       "type": ["null", "object"],
