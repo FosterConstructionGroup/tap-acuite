@@ -40,6 +40,11 @@ def handle_projects(schemas, state, mdata):
     write_many(rows, "projects", schemas["projects"], mdata, extraction_time)
 
     for project in rows:
+
+        def add_project_id(row):
+            row["ProjectId"] = project["Id"]
+            return row
+
         if schemas.get("audits"):
             handle_audits(
                 project["Id"], schemas, state, mdata,
@@ -49,9 +54,9 @@ def handle_projects(schemas, state, mdata):
             handle_hsevents(project["Id"], schemas, state, mdata)
 
         if schemas.get("rfis"):
-            handle_paginated("rfis", "projects/{}/rfi".format(project["Id"]))(
-                schemas["rfis"], state, mdata
-            )
+            handle_paginated(
+                "rfis", "projects/{}/rfi".format(project["Id"]), func=add_project_id
+            )(schemas["rfis"], state, mdata)
 
     return write_bookmark(state, "projects", extraction_time)
 

@@ -3,6 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "Id": { "type": ["integer"] },
+    "ProjectId": { "type": ["integer"] },
     "VendorCode": { "type": ["null", "string"] },
     "Company": {
       "type": ["null", "object"],
