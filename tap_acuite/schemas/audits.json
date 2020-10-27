@@ -3,6 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "Id": { "type": ["integer"] },
+    "ProjectId": { "type": ["integer"] },
     "Kpi": { "type": ["null", "string"] },
     "Name": { "type": ["null", "string"] },
     "Template": {

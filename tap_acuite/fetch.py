@@ -42,7 +42,7 @@ def handle_projects(schemas, state, mdata):
     for project in rows:
         if schemas.get("audits"):
             handle_audits(
-                "projects/{}/audits".format(project["Id"]), schemas, state, mdata,
+                project["Id"], schemas, state, mdata,
             )
 
         if schemas.get("hsevents"):
@@ -115,7 +115,8 @@ def handle_hsevents(project_id, schemas, state, mdata):
     return write_bookmark(state, "hsevents", extraction_time)
 
 
-def handle_audits(url, schemas, state, mdata):
+def handle_audits(project_id, schemas, state, mdata):
+    url = "projects/{}/audits".format(project_id)
     resource = "audits"
     extraction_time = singer.utils.now()
     r = get_generic(resource, url)
@@ -127,6 +128,7 @@ def handle_audits(url, schemas, state, mdata):
     with metrics.record_counter(resource) as counter:
         for row in r["Data"]:
             detail = get_detail(row)
+            detail["ProjectId"] = project_id
 
             # add section ID to each question
             try:
