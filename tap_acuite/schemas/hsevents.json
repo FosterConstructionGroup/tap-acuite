@@ -5,7 +5,7 @@
     "Id": { "type": ["integer"] },
     "ProjectId": { "type": ["integer"] },
     "Name": { "type": ["null", "string"] },
-    "Subcategory": {
+    "SubCategory": {
       "type": ["null", "object"],
       "additionalProperties": false,
       "properties": {
