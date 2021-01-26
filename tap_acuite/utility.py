@@ -1,6 +1,6 @@
-import sys, os
-import aiohttp
+import os
 import asyncio
+from tenacity import retry, stop_after_attempt
 import singer.metrics as metrics
 from datetime import datetime
 
@@ -11,13 +11,16 @@ pageSize = 1000
 sem = asyncio.Semaphore(12)
 
 
+# requests don't normally fail, but sometimes there's an intermittent 500
+@retry(stop=stop_after_attempt(4))
 async def get_generic(session, source, url, qs={}):
     async with sem:
         with metrics.http_request_timer(source) as timer:
             query_string = build_query_string(qs)
-            async with await session.get(base_url + url + query_string) as resp:
+            async with await session.get(
+                base_url + url + query_string, raise_for_status=True
+            ) as resp:
                 timer.tags[metrics.Tag.http_status_code] = resp.status
-                resp.raise_for_status()
                 return await resp.json()
 
 
