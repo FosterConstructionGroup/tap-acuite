@@ -1,12 +1,14 @@
 import os
-import argparse
 import json
+import asyncio
+import aiohttp
 import singer
 from singer import metadata
 from singer.bookmarks import get_bookmark
 
-from tap_acuite.utility import get_abs_path, session
+from tap_acuite.utility import get_abs_path
 from tap_acuite.config import SYNC_FUNCTIONS, SUB_STREAMS
+from tap_acuite.fetch import write_bookmark
 
 logger = singer.get_logger()
 
@@ -95,12 +97,11 @@ def get_stream_from_catalog(stream_id, catalog):
     return None
 
 
-def do_sync(config, state, catalog):
-    session.headers.update({"AcuiteApiKey": config["api_key"]})
-
+async def do_sync(session, state, catalog):
     selected_stream_ids = get_selected_streams(catalog)
 
-    singer.write_state(state)
+    # sync streams in parallel
+    streams = []
 
     for stream in catalog["streams"]:
         stream_id = stream["tap_stream_id"]
@@ -121,7 +122,7 @@ def do_sync(config, state, catalog):
 
             # sync stream
             if not sub_stream_ids:
-                state = sync_func(stream_schema, state, mdata)
+                streams.append(sync_func(session, stream_schema, state, mdata))
 
             # handle streams with sub streams
             else:
@@ -139,9 +140,20 @@ def do_sync(config, state, catalog):
                         )
 
                 # sync stream and it's sub streams
-                state = sync_func(stream_schemas, state, mdata)
+                streams.append(sync_func(session, stream_schemas, state, mdata))
 
-            singer.write_state(state)
+    streams_resolved = await asyncio.gather(*streams)
+
+    # update bookmark by merging in all streams
+    for (resource, extraction_time) in streams_resolved:
+        state = write_bookmark(state, resource, extraction_time)
+    singer.write_state(state)
+
+
+async def run_async(config, state, catalog):
+    auth_headers = {"AcuiteApiKey": config["api_key"]}
+    async with aiohttp.ClientSession(headers=auth_headers) as session:
+        await do_sync(session, state, catalog)
 
 
 @singer.utils.handle_top_exception(logger)
@@ -152,7 +164,9 @@ def main():
         do_discover()
     else:
         catalog = args.properties if args.properties else get_catalog()
-        do_sync(args.config, args.state, catalog)
+        asyncio.get_event_loop().run_until_complete(
+            run_async(args.config, args.state, catalog)
+        )
 
 
 if __name__ == "__main__":

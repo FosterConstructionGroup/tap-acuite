@@ -1,47 +1,32 @@
 import sys, os
-import requests
+import aiohttp
+import asyncio
 import singer.metrics as metrics
 from datetime import datetime
-
-
-session = requests.Session()
-
-
-class AuthException(Exception):
-    pass
-
-
-class NotFoundException(Exception):
-    pass
 
 
 # constants
 base_url = "https://api.acuite.co.nz/"
 pageSize = 1000
+sem = asyncio.Semaphore(12)
 
 
-def get_generic(source, url, qs={}):
-    with metrics.http_request_timer(source) as timer:
-        query_string = build_query_string(qs)
-        resp = session.request(method="get", url=base_url + url + query_string)
-
-        if resp.status_code == 401:
-            raise AuthException(resp.text)
-        if resp.status_code == 403:
-            raise AuthException(resp.text)
-        if resp.status_code == 404:
-            raise NotFoundException(resp.text)
-        resp.raise_for_status()  # throw exception if not 200
-
-        timer.tags[metrics.Tag.http_status_code] = resp.status_code
-        return resp.json()
+async def get_generic(session, source, url, qs={}):
+    async with sem:
+        with metrics.http_request_timer(source) as timer:
+            query_string = build_query_string(qs)
+            async with await session.get(base_url + url + query_string) as resp:
+                timer.tags[metrics.Tag.http_status_code] = resp.status
+                resp.raise_for_status()
+                return await resp.json()
 
 
-def get_all_pages(source, url, extra_query_string={}):
+async def get_all_pages(session, source, url, extra_query_string={}):
     current_page = 1
 
     while True:
-        r = get_generic(
+        r = await get_generic(
+            session,
             source,
             url,
             {**extra_query_string, "pageNumber": current_page, "pageSize": pageSize},

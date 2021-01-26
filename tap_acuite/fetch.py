@@ -1,3 +1,4 @@
+import asyncio
 import singer
 import singer.metrics as metrics
 from singer import metadata
@@ -14,9 +15,9 @@ def handle_paginated(resource, url="", func=None):
     if url == "":
         url = resource
 
-    def get(schema, state, mdata):
+    async def get(session, schema, state, mdata):
         with metrics.record_counter(resource) as counter:
-            for page in get_all_pages(resource, url):
+            async for page in get_all_pages(session, resource, url):
                 for row in page:
                     # optional transform function
                     if func != None:
@@ -24,53 +25,60 @@ def handle_paginated(resource, url="", func=None):
 
                     write_record(row, resource, schema, mdata, extraction_time)
                     counter.increment()
-        return write_bookmark(state, resource, extraction_time)
+        return (resource, extraction_time)
 
     return get
 
 
-def handle_projects(schemas, state, mdata):
+async def handle_projects(session, schemas, state, mdata):
     extraction_time = singer.utils.now()
 
     rows = [
         row
-        for page in get_all_pages("projects", "projects", {"includeArchived": "true"})
+        async for page in get_all_pages(
+            session, "projects", "projects", {"includeArchived": "true"}
+        )
         for row in page
     ]
     write_many(rows, "projects", schemas["projects"], mdata, extraction_time)
 
+    def add_project_id(row):
+        row["ProjectId"] = project["Id"]
+        return row
+
+    subqueries = []
     for project in rows:
-
-        def add_project_id(row):
-            row["ProjectId"] = project["Id"]
-            return row
-
         if schemas.get("audits"):
-            handle_audits(
-                project["Id"], schemas, state, mdata,
+            subqueries.append(
+                handle_audits(session, project["Id"], schemas, state, mdata,)
             )
-
         if schemas.get("hsevents"):
-            handle_hsevents(project["Id"], schemas, state, mdata)
-
+            subqueries.append(
+                handle_hsevents(session, project["Id"], schemas, state, mdata)
+            )
         if schemas.get("rfis"):
-            handle_paginated(
-                "rfis", "projects/{}/rfi".format(project["Id"]), func=add_project_id
-            )(schemas["rfis"], state, mdata)
+            subqueries.append(
+                handle_paginated(
+                    "rfis", f"projects/{project['Id']}/rfi", func=add_project_id
+                )(session, schemas["rfis"], state, mdata)
+            )
+    await asyncio.gather(*subqueries)
 
-    return write_bookmark(state, "projects", extraction_time)
+    return ("projects", extraction_time)
 
 
-def handle_hsevents(project_id, schemas, state, mdata):
-    url = "projects/{}/hse/events".format(project_id)
+async def handle_hsevents(session, project_id, schemas, state, mdata):
+    url = f"projects/{project_id}/hse/events"
     extraction_time = singer.utils.now()
-    r = get_generic("hsevents", url)
 
-    def get_detail(row):
-        r = get_generic("hsevents", "{}/{}".format(url, row["Id"]))
-        return r["Data"]
+    sync_categories = schemas.get("categories")
+    sync_subcategories = schemas.get("subcategories")
+    categories_ids = set() if sync_categories else None
+    subcategories_ids = set() if sync_subcategories else None
 
-    details = [get_detail(row) for row in r["Data"]]
+    res = await get_generic(session, "hsevents", url)
+    # immediately discard everything except the ID to minimise memory footprint (could be holding this array for a while)
+    row_ids = [row["Id"] for row in res["Data"]]
 
     columns_to_trim = [
         "Description",
@@ -78,61 +86,52 @@ def handle_hsevents(project_id, schemas, state, mdata):
         "ActionTaken",
         "WeatherConditions",
     ]
-    for row in details:
+
+    # do all processing at the row level, including writing records one at a time
+    # this should minimise memory usage
+    async def get_detail(id):
+        r = await get_generic(session, "hsevents", f"{url}/{id}")
+        row = r["Data"]
+        # Project ID isn't returned in the record, so add it
+        row["ProjectId"] = project_id
+
         # keep only first 500 characters of these columns as they aren't needed for reporting, take up space in Redshift, and Redshift tops out at 1k characters
         for col in columns_to_trim:
             if col in row and len(row[col]) > 500:
                 row[col] = row[col][:500]
 
-        # Project ID isn't returned in the record, so add it
-        row["ProjectId"] = project_id
+        write_record(row, "hsevents", schemas["hsevents"], mdata, extraction_time)
 
-    write_many(details, "hsevents", schemas["hsevents"], mdata, extraction_time)
-
-    if schemas.get("categories"):
-        categories_ids = set()
-        categories = []
-        for evt in details:
-            c = evt["SubCategory"]["ParentCategory"]
+        if sync_categories:
+            c = row["SubCategory"]["ParentCategory"]
             if c["Id"] not in categories_ids:
                 categories_ids.add(c["Id"])
-                categories.append(c)
-        write_many(
-            categories, "categories", schemas["categories"], mdata, extraction_time
-        )
-
-    if schemas.get("subcategories"):
-        subcategories_ids = set()
-        subcategories = []
-        for evt in details:
-            s = evt["SubCategory"]
+                write_record(
+                    c, "categories", schemas["categories"], mdata, extraction_time
+                )
+        if sync_subcategories:
+            s = row["SubCategory"]
             if s["Id"] not in subcategories_ids:
                 subcategories_ids.add(s["Id"])
-                subcategories.append(s)
-        write_many(
-            subcategories,
-            "subcategories",
-            schemas["subcategories"],
-            mdata,
-            extraction_time,
-        )
+                write_record(
+                    s, "subcategories", schemas["subcategories"], mdata, extraction_time
+                )
 
-    return write_bookmark(state, "hsevents", extraction_time)
+    await asyncio.gather(*[get_detail(id) for id in row_ids])
+
+    return ("hsevents", extraction_time)
 
 
-def handle_audits(project_id, schemas, state, mdata):
-    url = "projects/{}/audits".format(project_id)
+async def handle_audits(session, project_id, schemas, state, mdata):
+    url = f"projects/{project_id}/audits"
     resource = "audits"
     extraction_time = singer.utils.now()
-    r = get_generic(resource, url)
-
-    def get_detail(row):
-        r = get_generic(resource, "{}/{}".format(url, row["Id"]))
-        return r["Data"]
+    r = await get_generic(session, resource, url)
 
     with metrics.record_counter(resource) as counter:
         for row in r["Data"]:
-            detail = get_detail(row)
+            detail = await get_generic(session, resource, f"{url}/{row['Id']}")
+            detail = detail["Data"]
             detail["ProjectId"] = project_id
 
             # add section ID to each question
@@ -148,24 +147,22 @@ def handle_audits(project_id, schemas, state, mdata):
             write_record(detail, resource, schemas[resource], mdata, extraction_time)
             counter.increment()
 
-    return write_bookmark(state, resource, extraction_time)
+    return (resource, extraction_time)
 
 
-def handle_detailed(resource, url, schemas, state, mdata):
+async def handle_detailed(session, resource, url, schemas, state, mdata):
     extraction_time = singer.utils.now()
-    r = get_generic(resource, url)
-
-    def get_detail(row):
-        r = get_generic(resource, "{}/{}".format(url, row["Id"]))
-        return r["Data"]
+    r = await get_generic(session, resource, url)
 
     with metrics.record_counter(resource) as counter:
         for row in r["Data"]:
-            detail = get_detail(row)
-            write_record(detail, resource, schemas[resource], mdata, extraction_time)
+            detail = await get_generic(session, resource, f"{url}/{row['Id']}")
+            write_record(
+                detail["Data"], resource, schemas[resource], mdata, extraction_time
+            )
             counter.increment()
 
-    return write_bookmark(state, resource, extraction_time)
+    return (resource, extraction_time)
 
 
 # More convenient to use but has to all be held in memory, so use write_record instead for resources with many rows
