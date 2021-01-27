@@ -20,6 +20,10 @@
     "RequiredDate": {
       "type": ["null", "string"],
       "format": "date-time"
+    },
+    "ReceivedDate": {
+      "type": ["null", "string"],
+      "format": "date-time"
     }
   }
 }
