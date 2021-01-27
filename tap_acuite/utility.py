@@ -8,7 +8,12 @@ from datetime import datetime
 # constants
 base_url = "https://api.acuite.co.nz/"
 pageSize = 1000
-sem = asyncio.Semaphore(12)
+sem = None
+
+# semaphore needs to be initialised within the main asyncio loop or it will make its own and cause issues
+def initialise_semaphore():
+    global sem
+    sem = asyncio.Semaphore(32)
 
 
 # requests don't normally fail, but sometimes there's an intermittent 500

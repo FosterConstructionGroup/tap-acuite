@@ -6,7 +6,7 @@ import singer
 from singer import metadata
 from singer.bookmarks import get_bookmark
 
-from tap_acuite.utility import get_abs_path
+from tap_acuite.utility import get_abs_path, initialise_semaphore
 from tap_acuite.config import SYNC_FUNCTIONS, SUB_STREAMS
 from tap_acuite.fetch import write_bookmark
 
@@ -153,6 +153,7 @@ async def do_sync(session, state, catalog):
 async def run_async(config, state, catalog):
     auth_headers = {"AcuiteApiKey": config["api_key"]}
     async with aiohttp.ClientSession(headers=auth_headers) as session:
+        initialise_semaphore()
         await do_sync(session, state, catalog)
 
 
