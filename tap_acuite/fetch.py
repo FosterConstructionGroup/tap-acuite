@@ -4,7 +4,7 @@ import singer.metrics as metrics
 from singer import metadata
 from tap_acuite.utility import (
     get_generic,
-    get_all_pages,
+    get_all,
     formatDate,
 )
 
@@ -17,14 +17,13 @@ def handle_paginated(resource, url="", func=None):
 
     async def get(session, schema, state, mdata):
         with metrics.record_counter(resource) as counter:
-            async for page in get_all_pages(session, resource, url):
-                for row in page:
-                    # optional transform function
-                    if func != None:
-                        row = func(row)
+            for row in await get_all(session, resource, url):
+                # optional transform function
+                if func != None:
+                    row = func(row)
 
-                    write_record(row, resource, schema, mdata, extraction_time)
-                    counter.increment()
+                write_record(row, resource, schema, mdata, extraction_time)
+                counter.increment()
         return (resource, extraction_time)
 
     return get
@@ -33,13 +32,7 @@ def handle_paginated(resource, url="", func=None):
 async def handle_projects(session, schemas, state, mdata):
     extraction_time = singer.utils.now()
 
-    rows = [
-        row
-        async for page in get_all_pages(
-            session, "projects", "projects", {"includeArchived": "true"}
-        )
-        for row in page
-    ]
+    rows = await get_all(session, "projects", "projects", {"includeArchived": "true"})
     write_many(rows, "projects", schemas["projects"], mdata, extraction_time)
 
     def add_project_id(row):

@@ -29,22 +29,28 @@ async def get_generic(session, source, url, qs={}):
                 return await resp.json()
 
 
-async def get_all_pages(session, source, url, extra_query_string={}):
-    current_page = 1
+async def get_all(session, source, url, extra_query_string={}):
+    async def get_page(page_number):
+        return (
+            await get_generic(
+                session,
+                source,
+                url,
+                {**extra_query_string, "pageNumber": page_number, "pageSize": pageSize},
+            )
+        )["Data"]
 
-    while True:
-        r = await get_generic(
-            session,
-            source,
-            url,
-            {**extra_query_string, "pageNumber": current_page, "pageSize": pageSize},
-        )
-        json = r["Data"]
-        yield json["Items"]
-        if json["NumberOfPages"] > json["CurrentPage"]:
-            current_page = json["CurrentPage"] + 1
-        else:
-            break
+    json = await get_page(1)
+
+    if json["NumberOfPages"] == 1:
+        return json["Items"]
+
+    pages = await asyncio.gather(
+        *[get_page(page_number) for page_number in range(2, 1 + json["NumberOfPages"])]
+    )
+    pages.insert(0, json)
+
+    return [row for page in pages for row in page["Items"]]
 
 
 def formatDate(dt):
