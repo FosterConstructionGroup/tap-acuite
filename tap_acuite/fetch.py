@@ -35,9 +35,12 @@ async def handle_projects(session, schemas, state, mdata):
     rows = await get_all(session, "projects", "projects", {"includeArchived": "true"})
     write_many(rows, "projects", schemas["projects"], mdata, extraction_time)
 
-    def add_project_id(row):
-        row["ProjectId"] = project["Id"]
-        return row
+    def add_project_id(project):
+        def add(row):
+            row["ProjectId"] = project["Id"]
+            return row
+
+        return add
 
     subqueries = []
     for project in rows:
@@ -52,7 +55,9 @@ async def handle_projects(session, schemas, state, mdata):
         if schemas.get("rfis"):
             subqueries.append(
                 handle_paginated(
-                    "rfis", f"projects/{project['Id']}/rfi", func=add_project_id
+                    "rfis",
+                    f"projects/{project['Id']}/rfi",
+                    func=add_project_id(project),
                 )(session, schemas["rfis"], state, mdata)
             )
     await asyncio.gather(*subqueries)
