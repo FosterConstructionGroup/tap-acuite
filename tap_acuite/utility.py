@@ -9,6 +9,7 @@ from datetime import datetime
 base_url = "https://api.acuite.co.nz/"
 pageSize = 1000
 sem = None
+base_format = "%Y-%m-%dT%H:%M:%S"
 
 # semaphore needs to be initialised within the main asyncio loop or it will make its own and cause issues
 def initialise_semaphore():
@@ -53,12 +54,18 @@ async def get_all(session, source, url, extra_query_string={}):
     return [row for page in pages for row in page["Items"]]
 
 
-def format_date(dt, format="%Y-%m-%dT%H:%M:%S"):
+def format_date(dt, format=base_format):
     return datetime.strftime(dt, format)
 
 
-def parse_date(str, format="%Y-%m-%dT%H:%M:%S"):
-    return datetime.strptime(str, format)
+def parse_date(str, format=base_format):
+    try:
+        return datetime.strptime(str, format)
+    except:
+        if format == base_format:
+            raise
+        else:
+            return datetime.strptime(str, base_format)
 
 
 def get_abs_path(path):
