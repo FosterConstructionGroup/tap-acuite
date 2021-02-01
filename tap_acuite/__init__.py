@@ -1,6 +1,7 @@
 import os
 import json
 import asyncio
+import uvloop
 import aiohttp
 import singer
 from singer import metadata
@@ -165,9 +166,8 @@ def main():
         do_discover()
     else:
         catalog = args.properties if args.properties else get_catalog()
-        asyncio.get_event_loop().run_until_complete(
-            run_async(args.config, args.state, catalog)
-        )
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        asyncio.run(run_async(args.config, args.state, catalog))
 
 
 if __name__ == "__main__":
