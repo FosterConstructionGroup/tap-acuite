@@ -53,8 +53,12 @@ async def get_all(session, source, url, extra_query_string={}):
     return [row for page in pages for row in page["Items"]]
 
 
-def formatDate(dt):
-    return datetime.strftime(dt, "%Y-%m-%dT%H:%M:%S")
+def format_date(dt, format="%Y-%m-%dT%H:%M:%S"):
+    return datetime.strftime(dt, format)
+
+
+def parse_date(str, format="%Y-%m-%dT%H:%M:%S"):
+    return datetime.strptime(str, format)
 
 
 def get_abs_path(path):

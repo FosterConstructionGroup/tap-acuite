@@ -1,11 +1,13 @@
 import asyncio
 import singer
 import singer.metrics as metrics
+from singer.bookmarks import get_bookmark
 from singer import metadata
 from tap_acuite.utility import (
     get_generic,
     get_all,
-    formatDate,
+    parse_date,
+    format_date,
 )
 
 
@@ -122,17 +124,27 @@ async def handle_hsevents(session, project_id, schemas, state, mdata):
     await asyncio.gather(*[get_detail(id) for id in row_ids])
 
 
+# once closed, can't be edited (unless Acuite unlocks it), so safe to stop syncing
 async def handle_audits(session, project_id, schemas, state, mdata):
     url = f"projects/{project_id}/audits"
     resource = "audits"
     extraction_time = singer.utils.now()
+    bookmark = parse_date(get_bookmark(state, resource, "since"))
     r = await get_generic(session, resource, url)
 
     with metrics.record_counter(resource) as counter:
+        # doesn't return DateClosed so have to always get the full details
         for row in r["Data"]:
             detail = await get_generic(session, resource, f"{url}/{row['Id']}")
             detail = detail["Data"]
             detail["ProjectId"] = project_id
+
+            # if closed before bookmark, then picked it up last time
+            if (
+                "DateClosed" in detail
+                and parse_date(detail["DateClosed"], "%Y-%m-%dT%H:%M:%S.%f") < bookmark
+            ):
+                continue
 
             # add section ID to each question
             try:
@@ -178,5 +190,5 @@ def write_record(row, resource, schema, mdata, dt):
 
 
 def write_bookmark(state, resource, dt):
-    singer.write_bookmark(state, resource, "since", formatDate(dt))
+    singer.write_bookmark(state, resource, "since", format_date(dt))
     return state
