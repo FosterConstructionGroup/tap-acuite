@@ -24,13 +24,14 @@ def handle_paginated(resource, url="", func=None):
 
                 write_record(row, resource, schema, mdata, extraction_time)
                 counter.increment()
-        return (resource, extraction_time)
+        return [(resource, extraction_time)]
 
     return get
 
 
 async def handle_projects(session, schemas, state, mdata):
     extraction_time = singer.utils.now()
+    times = [("projects", extraction_time)]
 
     rows = await get_all(session, "projects", "projects", {"includeArchived": "true"})
     write_many(rows, "projects", schemas["projects"], mdata, extraction_time)
@@ -48,10 +49,12 @@ async def handle_projects(session, schemas, state, mdata):
             subqueries.append(
                 handle_audits(session, project["Id"], schemas, state, mdata,)
             )
+            times.append(("audits", extraction_time))
         if schemas.get("hsevents"):
             subqueries.append(
                 handle_hsevents(session, project["Id"], schemas, state, mdata)
             )
+            times.append(("hsevents", extraction_time))
         if schemas.get("rfis"):
             subqueries.append(
                 handle_paginated(
@@ -60,9 +63,10 @@ async def handle_projects(session, schemas, state, mdata):
                     func=add_project_id(project),
                 )(session, schemas["rfis"], state, mdata)
             )
+            times.append(("rfis", extraction_time))
     await asyncio.gather(*subqueries)
 
-    return ("projects", extraction_time)
+    return times
 
 
 async def handle_hsevents(session, project_id, schemas, state, mdata):
@@ -117,8 +121,6 @@ async def handle_hsevents(session, project_id, schemas, state, mdata):
 
     await asyncio.gather(*[get_detail(id) for id in row_ids])
 
-    return ("hsevents", extraction_time)
-
 
 async def handle_audits(session, project_id, schemas, state, mdata):
     url = f"projects/{project_id}/audits"
@@ -145,8 +147,6 @@ async def handle_audits(session, project_id, schemas, state, mdata):
             write_record(detail, resource, schemas[resource], mdata, extraction_time)
             counter.increment()
 
-    return (resource, extraction_time)
-
 
 async def handle_detailed(session, resource, url, schemas, state, mdata):
     extraction_time = singer.utils.now()
@@ -160,7 +160,7 @@ async def handle_detailed(session, resource, url, schemas, state, mdata):
             )
             counter.increment()
 
-    return (resource, extraction_time)
+    return [(resource, extraction_time)]
 
 
 # More convenient to use but has to all be held in memory, so use write_record instead for resources with many rows

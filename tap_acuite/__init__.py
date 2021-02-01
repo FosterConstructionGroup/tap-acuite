@@ -146,8 +146,9 @@ async def do_sync(session, state, catalog):
     streams_resolved = await asyncio.gather(*streams)
 
     # update bookmark by merging in all streams
-    for (resource, extraction_time) in streams_resolved:
-        state = write_bookmark(state, resource, extraction_time)
+    for substream in streams_resolved:
+        for (resource, extraction_time) in substream:
+            state = write_bookmark(state, resource, extraction_time)
     singer.write_state(state)
 
 
