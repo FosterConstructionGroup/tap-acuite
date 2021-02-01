@@ -129,7 +129,8 @@ async def handle_audits(session, project_id, schemas, state, mdata):
     url = f"projects/{project_id}/audits"
     resource = "audits"
     extraction_time = singer.utils.now()
-    bookmark = parse_date(get_bookmark(state, resource, "since"))
+    bookmark_str = get_bookmark(state, resource, "since")
+    bookmark = parse_date(bookmark_str) if bookmark_str else None
     r = await get_generic(session, resource, url)
 
     with metrics.record_counter(resource) as counter:
@@ -141,7 +142,8 @@ async def handle_audits(session, project_id, schemas, state, mdata):
 
             # if closed before bookmark, then picked it up last time
             if (
-                "DateClosed" in detail
+                bookmark
+                and "DateClosed" in detail
                 and parse_date(detail["DateClosed"], "%Y-%m-%dT%H:%M:%S.%f") < bookmark
             ):
                 continue
