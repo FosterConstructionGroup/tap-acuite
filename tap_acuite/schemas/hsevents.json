@@ -62,7 +62,16 @@
       "type": ["null", "object"],
       "additionalProperties": false,
       "properties": {
+        "InjuredBodyParts": { "type": ["null", "string"] },
         "PreventativeAction": { "type": ["null", "string"] },
+        "NatureOfInjury": {
+          "type": ["null", "object"],
+          "additionalProperties": false,
+          "properties": {
+            "Id": { "type": ["null", "integer"] },
+            "Name": { "type": ["null", "string"] }
+          }
+        },
         "InjuredPersonDetails": {
           "type": ["null", "object"],
           "additionalProperties": false,
