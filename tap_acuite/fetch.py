@@ -58,6 +58,10 @@ async def handle_projects(session, schemas, state, mdata):
                 )
             )
             times.append(("audits", extraction_time))
+            if schemas.get("audit_sections"):
+                times.append(("audit_sections", extraction_time))
+            if schemas.get("audit_questions"):
+                times.append(("audit_questions", extraction_time))
         if schemas.get("hsevents"):
             subqueries.append(
                 handle_hsevents(session, project["Id"], schemas, state, mdata)
