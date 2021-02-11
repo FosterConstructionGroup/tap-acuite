@@ -1,0 +1,26 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "audit_id": { "type": ["integer"] },
+    "Id": { "type": ["integer"] },
+    "Name": {
+      "type": ["null", "string"]
+    },
+    "TemplateSection": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "integer"
+        }
+      }
+    },
+    "SectionNumber": {
+      "type": "integer"
+    },
+    "SubSections": {
+      "type": ["null", "array"],
+      "items": {}
+    }
+  }
+}

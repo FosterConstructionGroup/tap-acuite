@@ -18,6 +18,10 @@ SYNC_FUNCTIONS = {
 SUB_STREAMS = {
     "projects": [
         "audits",
+        # > from audits
+        "audit_sections",
+        "audit_questions",
+        # < from audits
         "rfis",
         "hsevents",
         # > from hsevents
@@ -26,4 +30,3 @@ SUB_STREAMS = {
         # < from hsevents
     ],
 }
-

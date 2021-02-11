@@ -49,7 +49,13 @@ async def handle_projects(session, schemas, state, mdata):
     for project in rows:
         if schemas.get("audits"):
             subqueries.append(
-                handle_audits(session, project["Id"], schemas, state, mdata,)
+                handle_audits(
+                    session,
+                    project["Id"],
+                    schemas,
+                    state,
+                    mdata,
+                )
             )
             times.append(("audits", extraction_time))
         if schemas.get("hsevents"):
@@ -131,6 +137,10 @@ async def handle_audits(session, project_id, schemas, state, mdata):
     extraction_time = singer.utils.now()
     bookmark_str = get_bookmark(state, resource, "since")
     bookmark = parse_date(bookmark_str) if bookmark_str else None
+
+    sync_sections = "audit_sections" in schemas
+    sync_questions = "audit_questions" in schemas
+
     r = await get_generic(session, resource, url)
 
     with metrics.record_counter(resource) as counter:
@@ -148,17 +158,31 @@ async def handle_audits(session, project_id, schemas, state, mdata):
             ):
                 continue
 
-            # add section ID to each question
+            # write audit
+            write_record(detail, resource, schemas[resource], mdata, extraction_time)
+
             try:
-                for section in detail["Sections"]:
-                    for question in section["Questions"]:
-                        question["section_id"] = section["Id"]
-                        # Trim to max 500 characters as Redshift has max length 1k characters
-                        question["Answer"] = question["Answer"][:500]
+                if sync_sections:
+                    r = "audit_sections"
+                    for section in detail["Sections"]:
+                        section["audit_id"] = detail["Id"]
+                        write_record(section, r, schemas[r], mdata, extraction_time)
             except:
                 pass
 
-            write_record(detail, resource, schemas[resource], mdata, extraction_time)
+            try:
+                if sync_questions:
+                    r = "audit_questions"
+                    for section in detail["Sections"]:
+                        for q in section["Questions"]:
+                            q["audit_id"] = detail["Id"]
+                            q["section_id"] = section["Id"]
+                            # Trim to max 500 characters as Redshift has max length 1k characters
+                            q["Answer"] = q["Answer"][:500]
+                            write_record(q, r, schemas[r], mdata, extraction_time)
+            except:
+                pass
+
             counter.increment()
 
 
