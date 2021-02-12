@@ -142,7 +142,7 @@ async def do_sync(session, state, catalog):
                             sub_stream["key_properties"],
                         )
 
-                # sync stream and it's sub streams
+                # sync stream and its sub streams
                 streams.append(sync_func(session, stream_schemas, state, mdata))
 
     streams_resolved = await asyncio.gather(*streams)

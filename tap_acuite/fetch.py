@@ -81,6 +81,32 @@ async def handle_projects(session, schemas, state, mdata):
     return times
 
 
+async def handle_people(session, schemas, state, mdata):
+    extraction_time = singer.utils.now()
+    resource = "people"
+    url = resource
+    sync_people_projects = "people_projects" in schemas
+
+    times = [(resource, extraction_time)]
+    if sync_people_projects:
+        times.append(("people_projects", extraction_time))
+
+    with metrics.record_counter(resource) as counter:
+        for row in await get_all(session, resource, url):
+            write_record(row, resource, schemas[resource], mdata, extraction_time)
+            counter.increment()
+
+            if sync_people_projects:
+                for p in row["AssignedProjects"]:
+                    resource = "people_projects"
+                    record = {"person_id": row["Id"], "project_id": p["Id"]}
+                    write_record(
+                        record, resource, schemas[resource], mdata, extraction_time
+                    )
+
+    return times
+
+
 async def handle_hsevents(session, project_id, schemas, state, mdata):
     url = f"projects/{project_id}/hse/events"
     extraction_time = singer.utils.now()

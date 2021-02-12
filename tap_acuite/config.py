@@ -1,4 +1,4 @@
-from tap_acuite.fetch import handle_paginated, handle_projects
+from tap_acuite.fetch import handle_paginated, handle_projects, handle_people
 
 
 def transform_person(row):
@@ -11,7 +11,7 @@ def transform_person(row):
 SYNC_FUNCTIONS = {
     "companies": handle_paginated("companies"),
     "locations": handle_paginated("locations"),
-    "people": handle_paginated("people", func=transform_person),
+    "people": handle_people,
     "projects": handle_projects,
 }
 
@@ -29,4 +29,5 @@ SUB_STREAMS = {
         "subcategories",
         # < from hsevents
     ],
+    "people": ["people_projects"],
 }
