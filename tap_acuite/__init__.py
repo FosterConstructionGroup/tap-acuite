@@ -100,6 +100,9 @@ def get_stream_from_catalog(stream_id, catalog):
 async def do_sync(session, state, catalog):
     selected_stream_ids = get_selected_streams(catalog)
 
+    # pipelinewise-target-redshift fails without this initial state message, per https://github.com/transferwise/pipelinewise-target-redshift/issues/69
+    singer.write_state(state)
+
     # sync streams in parallel
     streams = []
 
