@@ -98,21 +98,12 @@ async def handle_people(session, schemas, state, mdata):
 
             if sync_people_projects:
                 for p in row["AssignedProjects"]:
-                    resource = "people_projects"
                     record = {
                         "Id": str(row["Id"]) + "|" + str(p["Id"]),
                         "person_id": row["Id"],
                         "project_id": p["Id"],
                     }
-                    if (
-                        record["Id"] is None
-                        or record["person_id"] is None
-                        or record["project_id"] is None
-                    ):
-                        continue
-                    write_record(
-                        record, resource, schemas[resource], mdata, extraction_time
-                    )
+                    write_record(record, "people_projects", schemas["people_projects"], mdata, extraction_time)
 
     return times
 
