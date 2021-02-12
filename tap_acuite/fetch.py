@@ -104,7 +104,11 @@ async def handle_people(session, schemas, state, mdata):
                         "person_id": row["Id"],
                         "project_id": p["Id"],
                     }
-                    if row["Id"] is None or p["Id"] is None:
+                    if (
+                        record["Id"] is None
+                        or record["person_id"] is None
+                        or record["project_id"] is None
+                    ):
                         continue
                     write_record(
                         record, resource, schemas[resource], mdata, extraction_time
