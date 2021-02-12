@@ -103,7 +103,19 @@ async def handle_people(session, schemas, state, mdata):
                         "person_id": row["Id"],
                         "project_id": p["Id"],
                     }
-                    write_record(record, "people_projects", schemas["people_projects"], mdata, extraction_time)
+                    if (
+                        record["Id"] is None
+                        or record["person_id"] is None
+                        or record["project_id"] is None
+                    ):
+                        continue
+                    write_record(
+                        record,
+                        "people_projects",
+                        schemas["people_projects"],
+                        mdata,
+                        extraction_time,
+                    )
 
     return times
 
