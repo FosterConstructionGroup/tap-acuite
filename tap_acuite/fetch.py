@@ -1,3 +1,4 @@
+import json
 import asyncio
 import singer
 import singer.metrics as metrics
@@ -148,6 +149,10 @@ async def handle_hsevents(session, project_id, schemas, state, mdata):
         # Project ID isn't returned in the record, so add it
         row["ProjectId"] = project_id
 
+        # See https://www.notion.so/fosters/pipelinewise-target-redshift-strips-newlines-f937185a6aec439dbbdae0e9703f834b
+        row["description"] = json.dumps(row["description"])
+        row["action_taken"] = json.dumps(row["action_taken"])
+
         # keep only first 500 characters of these columns as they aren't needed for reporting, take up space in Redshift, and Redshift tops out at 1k characters
         for col in columns_to_trim:
             if col in row and len(row[col]) > 500:
@@ -220,8 +225,9 @@ async def handle_audits(session, project_id, schemas, state, mdata):
                         for q in section["Questions"]:
                             q["audit_id"] = detail["Id"]
                             q["section_id"] = section["Id"]
-                            # Trim to max 500 characters as Redshift has max length 1k characters
-                            q["Answer"] = q["Answer"][:500]
+                            # Redshift has max length 1k characters
+                            # see https://www.notion.so/fosters/pipelinewise-target-redshift-strips-newlines-f937185a6aec439dbbdae0e9703f834b
+                            q["Answer"] = json.dumps(q["Answer"][:750])
                             write_record(q, r, schemas[r], mdata, extraction_time)
             except:
                 pass
