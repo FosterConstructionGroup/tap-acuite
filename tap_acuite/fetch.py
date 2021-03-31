@@ -211,28 +211,23 @@ async def handle_audits(session, project_id, schemas, state, mdata):
             # write audit
             write_record(detail, resource, schemas[resource], mdata, extraction_time)
 
-            try:
-                if sync_sections:
-                    r = "audit_sections"
-                    for section in detail["Sections"]:
-                        section["audit_id"] = detail["Id"]
-                        write_record(section, r, schemas[r], mdata, extraction_time)
-            except:
-                pass
+            if sync_sections:
+                r = "audit_sections"
+                for section in detail["Sections"]:
+                    section["audit_id"] = detail["Id"]
+                    write_record(section, r, schemas[r], mdata, extraction_time)
 
-            try:
-                if sync_questions:
-                    r = "audit_questions"
-                    for section in detail["Sections"]:
-                        for q in section["Questions"]:
-                            q["audit_id"] = detail["Id"]
-                            q["section_id"] = section["Id"]
+            if sync_questions:
+                r = "audit_questions"
+                for section in detail["Sections"]:
+                    for q in section["Questions"]:
+                        q["audit_id"] = detail["Id"]
+                        q["section_id"] = section["Id"]
+                        if "Answer" in q:
                             # Redshift has max length 1k characters
                             # see https://www.notion.so/fosters/pipelinewise-target-redshift-strips-newlines-f937185a6aec439dbbdae0e9703f834b
                             q["Answer"] = json.dumps(q["Answer"][:750])
-                            write_record(q, r, schemas[r], mdata, extraction_time)
-            except:
-                pass
+                        write_record(q, r, schemas[r], mdata, extraction_time)
 
             counter.increment()
 
