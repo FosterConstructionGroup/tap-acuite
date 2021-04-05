@@ -200,6 +200,9 @@ async def handle_audits(session, project_id, schemas, state, mdata):
             detail = detail["Data"]
             detail["ProjectId"] = project_id
 
+            if "AuditedCompany" in detail:
+                detail["AuditedCompanyId"] = detail["AuditedCompany"]["Id"]
+
             # if closed before bookmark, then picked it up last time
             if (
                 bookmark

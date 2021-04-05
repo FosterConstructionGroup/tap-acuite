@@ -39,6 +39,7 @@
     },
     "IsDeleted": {
       "type": "boolean"
-    }
+    },
+    "AuditedCompanyId": { "type": ["null", "integer"] }
   }
 }
