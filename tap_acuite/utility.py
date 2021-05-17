@@ -18,7 +18,7 @@ def initialise_semaphore():
 
 
 # requests don't normally fail, but sometimes there's an intermittent 500
-@retry(stop=stop_after_attempt(4))
+@retry(stop=stop_after_attempt(10))
 async def get_generic(session, source, url, qs={}):
     async with sem:
         with metrics.http_request_timer(source) as timer:

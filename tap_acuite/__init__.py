@@ -156,7 +156,9 @@ async def do_sync(session, state, catalog):
 
 async def run_async(config, state, catalog):
     auth_headers = {"AcuiteApiKey": config["api_key"]}
-    async with aiohttp.ClientSession(headers=auth_headers) as session:
+    # default is 300s, which is excessive. Some endpoints are very slow and take 30s to return normally
+    timeout = aiohttp.ClientTimeout(total=90)
+    async with aiohttp.ClientSession(headers=auth_headers, timeout=timeout) as session:
         initialise_semaphore()
         await do_sync(session, state, catalog)
 
