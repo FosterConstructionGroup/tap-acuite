@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 import asyncio
 import singer
 import singer.metrics as metrics
@@ -20,7 +21,9 @@ def handle_paginated(resource, url="", func=None):
 
     async def get(session, schema, state, mdata):
         with metrics.record_counter(resource) as counter:
-            for row in await get_all(session, resource, url):
+            bookmark = get_bookmark(state, resource, "since")
+            qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
+            for row in await get_all(session, resource, url, qs):
                 # optional transform function
                 if func != None:
                     row = func(row)
@@ -34,10 +37,18 @@ def handle_paginated(resource, url="", func=None):
 
 async def handle_projects(session, schemas, state, mdata):
     extraction_time = singer.utils.now()
+    resource = "projects"
+    bookmark = get_bookmark(state, resource, "since")
     times = [("projects", extraction_time)]
 
     rows = await get_all(session, "projects", "projects", {"includeArchived": "true"})
-    write_many(rows, "projects", schemas["projects"], mdata, extraction_time)
+
+    # can't filter this in query string as we need all projects to pass to sub-streams. Has to be client-side filtering
+    # only using string sorting rather than date comparison, but ISO date format means that this works perfectly
+    filtered_projects = [r for r in rows if r["DateLastModified"] >= bookmark]
+    write_many(
+        filtered_projects, "projects", schemas["projects"], mdata, extraction_time
+    )
 
     def add_project_id(project):
         def add(row):
@@ -87,13 +98,15 @@ async def handle_people(session, schemas, state, mdata):
     resource = "people"
     url = resource
     sync_people_projects = "people_projects" in schemas
+    bookmark = get_bookmark(state, resource, "since")
+    qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
 
     times = [(resource, extraction_time)]
     if sync_people_projects:
         times.append(("people_projects", extraction_time))
 
     with metrics.record_counter(resource) as counter:
-        for row in await get_all(session, resource, url):
+        for row in await get_all(session, resource, url, qs):
             write_record(row, resource, schemas[resource], mdata, extraction_time)
             counter.increment()
 
@@ -123,6 +136,7 @@ async def handle_people(session, schemas, state, mdata):
 
 async def handle_hsevents(session, project_id, schemas, state, mdata):
     url = f"projects/{project_id}/hse/events"
+    resource = "hsevents"
     extraction_time = singer.utils.now()
 
     sync_categories = schemas.get("categories")
@@ -130,7 +144,9 @@ async def handle_hsevents(session, project_id, schemas, state, mdata):
     categories_ids = set() if sync_categories else None
     subcategories_ids = set() if sync_subcategories else None
 
-    res = await get_generic(session, "hsevents", url)
+    bookmark = get_bookmark(state, resource, "since")
+    qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
+    res = await get_generic(session, "hsevents", url, qs)
     # immediately discard everything except the ID to minimise memory footprint (could be holding this array for a while)
     row_ids = [row["Id"] for row in res["Data"]]
 
@@ -185,16 +201,15 @@ async def handle_audits(session, project_id, schemas, state, mdata):
     url = f"projects/{project_id}/audits"
     resource = "audits"
     extraction_time = singer.utils.now()
-    bookmark_str = get_bookmark(state, resource, "since")
-    bookmark = parse_date(bookmark_str) if bookmark_str else None
 
     sync_sections = "audit_sections" in schemas
     sync_questions = "audit_questions" in schemas
 
-    r = await get_generic(session, resource, url)
+    bookmark = get_bookmark(state, resource, "since")
+    qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
+    r = await get_generic(session, resource, url, qs)
 
     with metrics.record_counter(resource) as counter:
-        # doesn't return DateClosed so have to always get the full details
         for row in r["Data"]:
             detail = await get_generic(session, resource, f"{url}/{row['Id']}")
             detail = detail["Data"]
@@ -202,14 +217,6 @@ async def handle_audits(session, project_id, schemas, state, mdata):
 
             if "AuditedCompany" in detail:
                 detail["AuditedCompanyId"] = detail["AuditedCompany"]["Id"]
-
-            # if closed before bookmark, then picked it up last time
-            if (
-                bookmark
-                and "DateClosed" in detail
-                and parse_date(detail["DateClosed"], "%Y-%m-%dT%H:%M:%S.%f") < bookmark
-            ):
-                continue
 
             # write audit
             write_record(detail, resource, schemas[resource], mdata, extraction_time)
@@ -237,7 +244,9 @@ async def handle_audits(session, project_id, schemas, state, mdata):
 
 async def handle_detailed(session, resource, url, schemas, state, mdata):
     extraction_time = singer.utils.now()
-    r = await get_generic(session, resource, url)
+    bookmark = get_bookmark(state, resource, "since")
+    qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
+    r = await get_generic(session, resource, url, qs)
 
     with metrics.record_counter(resource) as counter:
         for row in r["Data"]:

@@ -6,7 +6,7 @@ from datetime import datetime
 
 
 # constants
-base_url = "https://api.acuite.co.nz/"
+base_url = "https://api.acuite.io/"
 pageSize = 1000
 sem = None
 base_format = "%Y-%m-%dT%H:%M:%S"
