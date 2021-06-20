@@ -45,7 +45,9 @@ async def handle_projects(session, schemas, state, mdata):
 
     # can't filter this in query string as we need all projects to pass to sub-streams. Has to be client-side filtering
     # only using string sorting rather than date comparison, but ISO date format means that this works perfectly
-    filtered_projects = [r for r in rows if r["DateLastModified"] >= bookmark]
+    filtered_projects = [
+        r for r in rows if (bookmark is None or r["DateLastModified"] >= bookmark)
+    ]
     write_many(
         filtered_projects, "projects", schemas["projects"], mdata, extraction_time
     )
