@@ -4,7 +4,6 @@ import asyncio
 import aiohttp
 import singer
 from singer import metadata
-from singer.bookmarks import get_bookmark
 
 from tap_acuite.utility import get_abs_path, initialise_semaphore
 from tap_acuite.config import SYNC_FUNCTIONS, SUB_STREAMS

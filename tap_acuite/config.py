@@ -22,7 +22,6 @@ SUB_STREAMS = {
         "audit_sections",
         "audit_questions",
         # < from audits
-        "rfis",
         "hsevents",
         # > from hsevents
         "categories",

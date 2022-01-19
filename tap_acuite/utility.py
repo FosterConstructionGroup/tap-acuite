@@ -23,6 +23,7 @@ async def get_generic(session, source, url, qs={}):
     async with sem:
         with metrics.http_request_timer(source) as timer:
             query_string = build_query_string(qs)
+            # print("URL:", base_url + url + query_string)
             async with await session.get(
                 base_url + url + query_string, raise_for_status=True
             ) as resp:

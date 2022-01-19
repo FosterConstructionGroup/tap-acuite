@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 import asyncio
 import singer
 import singer.metrics as metrics
@@ -8,7 +7,6 @@ from singer import metadata
 from tap_acuite.utility import (
     get_generic,
     get_all,
-    parse_date,
     format_date,
 )
 
@@ -52,13 +50,6 @@ async def handle_projects(session, schemas, state, mdata):
         filtered_projects, "projects", schemas["projects"], mdata, extraction_time
     )
 
-    def add_project_id(project):
-        def add(row):
-            row["ProjectId"] = project["Id"]
-            return row
-
-        return add
-
     subqueries = []
     for project in rows:
         if schemas.get("audits"):
@@ -81,15 +72,6 @@ async def handle_projects(session, schemas, state, mdata):
                 handle_hsevents(session, project["Id"], schemas, state, mdata)
             )
             times.append(("hsevents", extraction_time))
-        if schemas.get("rfis"):
-            subqueries.append(
-                handle_paginated(
-                    "rfis",
-                    f"projects/{project['Id']}/rfi",
-                    func=add_project_id(project),
-                )(session, schemas["rfis"], state, mdata)
-            )
-            times.append(("rfis", extraction_time))
     await asyncio.gather(*subqueries)
 
     return times
