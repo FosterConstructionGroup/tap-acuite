@@ -83,7 +83,12 @@ async def handle_people(session, schemas, state, mdata):
     url = resource
     sync_people_projects = "people_projects" in schemas
     bookmark = get_bookmark(state, resource, "since")
-    qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
+    qs = (
+        {"lastModifiedSince": bookmark}
+        if bookmark is not None
+        # people endpoint times out if you go back too far
+        else {"lastModifiedSince": "2021-12-01T00:00:00"}
+    )
 
     times = [(resource, extraction_time)]
     if sync_people_projects:

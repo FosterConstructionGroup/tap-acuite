@@ -7,7 +7,7 @@ from datetime import datetime
 
 # constants
 base_url = "https://api.acuite.io/"
-pageSize = 1000
+base_page_size = 1000
 sem = None
 base_format = "%Y-%m-%dT%H:%M:%S"
 
@@ -23,7 +23,7 @@ async def get_generic(session, source, url, qs={}):
     async with sem:
         with metrics.http_request_timer(source) as timer:
             query_string = build_query_string(qs)
-            # print("URL:", base_url + url + query_string)
+            # print("### URL:", base_url + url + query_string)
             async with await session.get(
                 base_url + url + query_string, raise_for_status=True
             ) as resp:
@@ -32,13 +32,19 @@ async def get_generic(session, source, url, qs={}):
 
 
 async def get_all(session, source, url, extra_query_string={}):
+    page_size = base_page_size if source != "people" else 100
+
     async def get_page(page_number):
         return (
             await get_generic(
                 session,
                 source,
                 url,
-                {**extra_query_string, "pageNumber": page_number, "pageSize": pageSize},
+                {
+                    **extra_query_string,
+                    "pageNumber": page_number,
+                    "pageSize": page_size,
+                },
             )
         )["Data"]
 
