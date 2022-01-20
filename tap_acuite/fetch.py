@@ -193,6 +193,7 @@ async def handle_audits(session, project_id, schemas, state, mdata):
 
     sync_sections = "audit_sections" in schemas
     sync_questions = "audit_questions" in schemas
+    sync_comments = "audit_question_comments" in schemas
 
     bookmark = get_bookmark(state, resource, "since")
     qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
@@ -227,6 +228,20 @@ async def handle_audits(session, project_id, schemas, state, mdata):
                             # see https://www.notion.so/fosters/pipelinewise-target-redshift-strips-newlines-f937185a6aec439dbbdae0e9703f834b
                             q["Answer"] = json.dumps(q["Answer"][:750])
                         write_record(q, r, schemas[r], mdata, extraction_time)
+
+                        if sync_comments and "Comments" in q:
+                            for (i, c) in enumerate(q["Comments"]):
+                                c["Id"] = str(q["Id"]) + "_" + str(i)
+                                c["QuestionId"] = q["Id"]
+                                # could have special characters
+                                c["CommentText"] = json.dumps(c["CommentText"])
+                                write_record(
+                                    c,
+                                    "audit_question_comments",
+                                    schemas["audit_question_comments"],
+                                    mdata,
+                                    extraction_time,
+                                )
 
             counter.increment()
 

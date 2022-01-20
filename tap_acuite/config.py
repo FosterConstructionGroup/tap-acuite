@@ -21,6 +21,7 @@ SUB_STREAMS = {
         # > from audits
         "audit_sections",
         "audit_questions",
+        "audit_question_comments",
         # < from audits
         "hsevents",
         # > from hsevents
