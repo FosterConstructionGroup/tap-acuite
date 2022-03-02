@@ -151,16 +151,17 @@ async def handle_hsevents(session, project_id, schemas, state, mdata):
         # Project ID isn't returned in the record, so add it
         row["ProjectId"] = project_id
 
+        # keep only first 500 characters of these columns as they aren't needed for reporting, take up space in Redshift, and Redshift tops out at 1k characters
+        # need to trim before JSON-encoding as trimming a JSON-encoded string will leave a string that's not valid JSON
+        for col in columns_to_trim:
+            if col in row and len(row[col]) > 500:
+                row[col] = row[col][:500] + "..."
+
         # See https://www.notion.so/fosters/pipelinewise-target-redshift-strips-newlines-f937185a6aec439dbbdae0e9703f834b
         columns_with_special_characters = ["Description", "ActionTaken"]
         for col in columns_with_special_characters:
             if col in row:
                 row[col] = json.dumps(row[col])
-
-        # keep only first 500 characters of these columns as they aren't needed for reporting, take up space in Redshift, and Redshift tops out at 1k characters
-        for col in columns_to_trim:
-            if col in row and len(row[col]) > 500:
-                row[col] = row[col][:500]
 
         write_record(row, "hsevents", schemas["hsevents"], mdata, extraction_time)
 
