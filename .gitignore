@@ -94,7 +94,7 @@ ENV/
 
 *~
 
-config.json
+config*.json
 properties.json
 state.json
 
