@@ -13,6 +13,7 @@
     },
     "FirstName": { "type": ["null", "string"] },
     "LastName": { "type": ["null", "string"] },
+    "EmailAddress": { "type": ["null", "string"] },
     "PhoneNumber": { "type": ["null", "string"] },
     "IsDeleted": { "type": ["boolean"] }
   }
