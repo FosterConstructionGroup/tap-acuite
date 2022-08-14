@@ -4,6 +4,7 @@
   "properties": {
     "Id": { "type": ["integer"] },
     "Name": { "type": ["null", "string"] },
+    "Number": { "type": ["null", "string"] },
     "VendorCode": { "type": ["null", "string"] },
     "Status": { "type": ["null", "string"] },
     "Location": {
