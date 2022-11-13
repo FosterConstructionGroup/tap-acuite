@@ -10,8 +10,18 @@ setup(
     url="https://samwoolerton.com",
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_acuite"],
-    install_requires=["singer-python==5.9.0", "aiohttp==3.7.3", "tenacity==6.3.1",],
-    extras_require={"dev": ["pylint", "ipdb", "nose",]},
+    install_requires=[
+        "pipelinewise-singer-python==1.*",
+        "aiohttp==3.7.3",
+        "tenacity==6.3.1",
+    ],
+    extras_require={
+        "dev": [
+            "pylint",
+            "ipdb",
+            "nose",
+        ]
+    },
     entry_points="""
           [console_scripts]
           tap-acuite=tap_acuite:main
