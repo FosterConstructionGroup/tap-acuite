@@ -34,7 +34,7 @@
       "type": ["null", "number"]
     },
     "Priority": {
-      "type": "object",
+      "type": ["null", "object"],
       "properties": {
         "Id": {
           "type": "integer"

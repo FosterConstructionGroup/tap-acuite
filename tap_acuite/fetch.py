@@ -10,6 +10,8 @@ from tap_acuite.utility import (
     format_date,
 )
 
+logger = singer.get_logger()
+
 
 def handle_paginated(resource, url="", func=None):
     extraction_time = singer.utils.now()
@@ -17,17 +19,15 @@ def handle_paginated(resource, url="", func=None):
     if url == "":
         url = resource
 
-    async def get(session, schema, state, mdata):
-        with metrics.record_counter(resource) as counter:
-            bookmark = get_bookmark(state, resource, "since")
-            qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
-            for row in await get_all(session, resource, url, qs):
-                # optional transform function
-                if func != None:
-                    row = func(row)
+    async def get(session, schema, state, mdata):       
+        bookmark = get_bookmark(state, resource, "since")
+        qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
+        for row in await get_all(session, resource, url, qs):
+            # optional transform function
+            if func != None:
+                row = func(row)
 
-                write_record(row, resource, schema, mdata, extraction_time)
-                counter.increment()
+            write_record(row, resource, schema, mdata, extraction_time)
         return [(resource, extraction_time)]
 
     return get
@@ -154,13 +154,13 @@ async def handle_hsevents(session, project_id, schemas, state, mdata):
         # keep only first 500 characters of these columns as they aren't needed for reporting, take up space in Redshift, and Redshift tops out at 1k characters
         # need to trim before JSON-encoding as trimming a JSON-encoded string will leave a string that's not valid JSON
         for col in columns_to_trim:
-            if col in row and len(row[col]) > 500:
+            if row.get(col) and len(row[col]) > 500:
                 row[col] = row[col][:500] + "..."
 
         # See https://www.notion.so/fosters/pipelinewise-target-redshift-strips-newlines-f937185a6aec439dbbdae0e9703f834b
         columns_with_special_characters = ["Description", "ActionTaken"]
         for col in columns_with_special_characters:
-            if col in row:
+            if row.get(col):
                 row[col] = json.dumps(row[col])
 
         write_record(row, "hsevents", schemas["hsevents"], mdata, extraction_time)
@@ -203,7 +203,7 @@ async def handle_audits(session, project_id, schemas, state, mdata):
             detail = detail["Data"]
             detail["ProjectId"] = project_id
 
-            if "AuditedCompany" in detail:
+            if detail.get("AuditedCompany"):
                 detail["AuditedCompanyId"] = detail["AuditedCompany"]["Id"]
 
             # write audit
@@ -221,13 +221,13 @@ async def handle_audits(session, project_id, schemas, state, mdata):
                     for q in section["Questions"]:
                         q["audit_id"] = detail["Id"]
                         q["section_id"] = section["Id"]
-                        if "Answer" in q:
+                        if q.get("Answer"):
                             # Redshift has max length 1k characters
                             # see https://www.notion.so/fosters/pipelinewise-target-redshift-strips-newlines-f937185a6aec439dbbdae0e9703f834b
                             q["Answer"] = json.dumps(q["Answer"][:750])
                         write_record(q, r, schemas[r], mdata, extraction_time)
 
-                        if sync_comments and "Comments" in q:
+                        if sync_comments and q.get("Comments"):
                             for (i, c) in enumerate(q["Comments"]):
                                 c["Id"] = str(q["Id"]) + "_" + str(i)
                                 c["QuestionId"] = q["Id"]
