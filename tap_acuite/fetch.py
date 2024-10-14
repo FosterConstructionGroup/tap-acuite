@@ -1,7 +1,6 @@
 import json
 import asyncio
 import singer
-import singer.metrics as metrics
 from singer.bookmarks import get_bookmark
 from singer import metadata
 from tap_acuite.utility import (
@@ -91,31 +90,29 @@ async def handle_people(session, schemas, state, mdata):
     if sync_people_projects:
         times.append(("people_projects", extraction_time))
 
-    with metrics.record_counter(resource) as counter:
-        for row in await get_all(session, resource, url, qs):
-            write_record(row, resource, schemas[resource], mdata, extraction_time)
-            counter.increment()
+    for row in await get_all(session, resource, url, qs):
+        write_record(row, resource, schemas[resource], mdata, extraction_time)
 
-            if sync_people_projects:
-                for p in row["AssignedProjects"]:
-                    record = {
-                        "Id": str(row["Id"]) + "|" + str(p["Id"]),
-                        "person_id": row["Id"],
-                        "project_id": p["Id"],
-                    }
-                    if (
-                        record["Id"] is None
-                        or record["person_id"] is None
-                        or record["project_id"] is None
-                    ):
-                        continue
-                    write_record(
-                        record,
-                        "people_projects",
-                        schemas["people_projects"],
-                        mdata,
-                        extraction_time,
-                    )
+        if sync_people_projects:
+            for p in row["AssignedProjects"]:
+                record = {
+                    "Id": str(row["Id"]) + "|" + str(p["Id"]),
+                    "person_id": row["Id"],
+                    "project_id": p["Id"],
+                }
+                if (
+                    record["Id"] is None
+                    or record["person_id"] is None
+                    or record["project_id"] is None
+                ):
+                    continue
+                write_record(
+                    record,
+                    "people_projects",
+                    schemas["people_projects"],
+                    mdata,
+                    extraction_time,
+                )
 
     return times
 
@@ -197,51 +194,48 @@ async def handle_audits(session, project_id, schemas, state, mdata):
     qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
     r = await get_generic(session, resource, url, qs)
 
-    with metrics.record_counter(resource) as counter:
-        for row in r["Data"]:
-            detail = await get_generic(session, resource, f"{url}/{row['Id']}")
-            detail = detail["Data"]
-            detail["ProjectId"] = project_id
+    for row in r["Data"]:
+        detail = await get_generic(session, resource, f"{url}/{row['Id']}")
+        detail = detail["Data"]
+        detail["ProjectId"] = project_id
 
-            if detail.get("AuditedCompany"):
-                detail["AuditedCompanyId"] = detail["AuditedCompany"]["Id"]
+        if detail.get("AuditedCompany"):
+            detail["AuditedCompanyId"] = detail["AuditedCompany"]["Id"]
 
-            # write audit
-            write_record(detail, resource, schemas[resource], mdata, extraction_time)
+        # write audit
+        write_record(detail, resource, schemas[resource], mdata, extraction_time)
 
-            if sync_sections:
-                r = "audit_sections"
-                for section in detail["Sections"]:
-                    section["audit_id"] = detail["Id"]
-                    write_record(section, r, schemas[r], mdata, extraction_time)
+        if sync_sections:
+            r = "audit_sections"
+            for section in detail["Sections"]:
+                section["audit_id"] = detail["Id"]
+                write_record(section, r, schemas[r], mdata, extraction_time)
 
-            if sync_questions:
-                r = "audit_questions"
-                for section in detail["Sections"]:
-                    for q in section["Questions"]:
-                        q["audit_id"] = detail["Id"]
-                        q["section_id"] = section["Id"]
-                        if q.get("Answer"):
-                            # Redshift has max length 1k characters
-                            # see https://www.notion.so/fosters/pipelinewise-target-redshift-strips-newlines-f937185a6aec439dbbdae0e9703f834b
-                            q["Answer"] = json.dumps(q["Answer"][:750])
-                        write_record(q, r, schemas[r], mdata, extraction_time)
+        if sync_questions:
+            r = "audit_questions"
+            for section in detail["Sections"]:
+                for q in section["Questions"]:
+                    q["audit_id"] = detail["Id"]
+                    q["section_id"] = section["Id"]
+                    if q.get("Answer"):
+                        # Redshift has max length 1k characters
+                        # see https://www.notion.so/fosters/pipelinewise-target-redshift-strips-newlines-f937185a6aec439dbbdae0e9703f834b
+                        q["Answer"] = json.dumps(q["Answer"][:750])
+                    write_record(q, r, schemas[r], mdata, extraction_time)
 
-                        if sync_comments and q.get("Comments"):
-                            for (i, c) in enumerate(q["Comments"]):
-                                c["Id"] = str(q["Id"]) + "_" + str(i)
-                                c["QuestionId"] = q["Id"]
-                                # could have special characters
-                                c["CommentText"] = json.dumps(c["CommentText"])
-                                write_record(
-                                    c,
-                                    "audit_question_comments",
-                                    schemas["audit_question_comments"],
-                                    mdata,
-                                    extraction_time,
-                                )
-
-            counter.increment()
+                    if sync_comments and q.get("Comments"):
+                        for (i, c) in enumerate(q["Comments"]):
+                            c["Id"] = str(q["Id"]) + "_" + str(i)
+                            c["QuestionId"] = q["Id"]
+                            # could have special characters
+                            c["CommentText"] = json.dumps(c["CommentText"])
+                            write_record(
+                                c,
+                                "audit_question_comments",
+                                schemas["audit_question_comments"],
+                                mdata,
+                                extraction_time,
+                            )
 
 
 async def handle_detailed(session, resource, url, schemas, state, mdata):
@@ -250,23 +244,19 @@ async def handle_detailed(session, resource, url, schemas, state, mdata):
     qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
     r = await get_generic(session, resource, url, qs)
 
-    with metrics.record_counter(resource) as counter:
-        for row in r["Data"]:
-            detail = await get_generic(session, resource, f"{url}/{row['Id']}")
-            write_record(
-                detail["Data"], resource, schemas[resource], mdata, extraction_time
-            )
-            counter.increment()
+    for row in r["Data"]:
+        detail = await get_generic(session, resource, f"{url}/{row['Id']}")
+        write_record(
+            detail["Data"], resource, schemas[resource], mdata, extraction_time
+        )
 
     return [(resource, extraction_time)]
 
 
 # More convenient to use but has to all be held in memory, so use write_record instead for resources with many rows
 def write_many(rows, resource, schema, mdata, dt):
-    with metrics.record_counter(resource) as counter:
-        for row in rows:
-            write_record(row, resource, schema, mdata, dt)
-            counter.increment()
+    for row in rows:
+        write_record(row, resource, schema, mdata, dt)
 
 
 def write_record(row, resource, schema, mdata, dt):

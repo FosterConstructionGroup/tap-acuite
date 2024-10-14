@@ -1,7 +1,6 @@
 import os
 import asyncio
 from tenacity import retry, stop_after_attempt
-import singer.metrics as metrics
 from datetime import datetime
 
 
@@ -21,14 +20,12 @@ def initialise_semaphore():
 @retry(stop=stop_after_attempt(10))
 async def get_generic(session, source, url, qs={}):
     async with sem:
-        with metrics.http_request_timer(source) as timer:
-            query_string = build_query_string(qs)
-            # print("### URL:", base_url + url + query_string)
-            async with await session.get(
-                base_url + url + query_string, raise_for_status=True
-            ) as resp:
-                timer.tags[metrics.Tag.http_status_code] = resp.status
-                return await resp.json()
+        query_string = build_query_string(qs)
+        # print("### URL:", base_url + url + query_string)
+        async with await session.get(
+            base_url + url + query_string, raise_for_status=True
+        ) as resp:
+            return await resp.json()
 
 
 async def get_all(session, source, url, extra_query_string={}):
