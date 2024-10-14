@@ -11,7 +11,7 @@
       "type": ["null", "string"]
     },
     "TemplateQuestion": {
-      "type": "object",
+      "type": ["null", "object"],
       "properties": {
         "Id": {
           "type": "integer"

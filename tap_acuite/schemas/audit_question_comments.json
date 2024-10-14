@@ -7,13 +7,13 @@
     "CommentText": { "type": ["null", "string"] },
     "CommentDate": { "type": ["null", "string"], "format": "date-time" },
     "Commenter": {
-      "type": "object",
+      "type": ["null", "object"],
       "properties": {
         "Id": { "type": "integer" },
         "FirstName": { "type": ["null", "string"] },
         "LastName": { "type": ["null", "string"] },
         "Company": {
-          "type": "object",
+          "type": ["null", "object"],
           "properties": {
             "Id": { "type": "integer" }
           }

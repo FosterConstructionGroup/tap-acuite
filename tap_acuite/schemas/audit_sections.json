@@ -8,7 +8,7 @@
       "type": ["null", "string"]
     },
     "TemplateSection": {
-      "type": "object",
+      "type": ["null", "object"],
       "properties": {
         "Id": {
           "type": "integer"

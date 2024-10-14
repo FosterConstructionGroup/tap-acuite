@@ -113,7 +113,7 @@
       "type": ["null", "object"],
       "additionalProperties": false,
       "properties": {
-        "Id": { "type": ["integer"] }
+        "Id": { "type": ["null", "integer"] }
       }
     },
     "LikelihoodOfEventReocurring": { "type": ["null", "integer"] },

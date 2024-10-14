@@ -18,7 +18,7 @@
       "format": "date-time"
     },
     "CreatedBy": {
-      "type": "object",
+      "type": ["null", "object"],
       "properties": {
         "Id": {
           "type": "integer"
