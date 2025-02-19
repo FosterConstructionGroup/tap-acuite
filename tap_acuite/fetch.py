@@ -21,6 +21,10 @@ def handle_paginated(resource, url="", func=None):
     async def get(session, schema, state, mdata):       
         bookmark = get_bookmark(state, resource, "since")
         qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
+        if (resource == "locations"):
+            qs["countryId"] = 27
+        if (resource == "companies"):
+            qs["includeDeleted"] = True
         for row in await get_all(session, resource, url, qs):
             # optional transform function
             if func != None:

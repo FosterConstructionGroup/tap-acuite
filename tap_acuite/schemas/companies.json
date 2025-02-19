@@ -3,6 +3,7 @@
   "properties": {
     "Id": { "type": ["integer"] },
     "VendorCode": { "type": ["null", "string"] },
-    "Name": { "type": ["null", "string"] }
+    "Name": { "type": ["null", "string"] },
+    "IsDeleted" : { "type": "boolean"}
   }
 }
