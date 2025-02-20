@@ -23,6 +23,12 @@ def handle_paginated(resource, url="", func=None):
         qs = {} if bookmark is None else {"lastModifiedSince": bookmark}
         if (resource == "locations"):
             qs["countryId"] = 27
+            for row in await get_all(session, resource, url, qs):
+            # optional transform function
+                if func != None:
+                    row = func(row)
+                write_record(row, resource, schema, mdata, extraction_time)
+            qs["countryId"] = 44
         if (resource == "companies"):
             qs["includeDeleted"] = True
         for row in await get_all(session, resource, url, qs):
